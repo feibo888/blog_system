@@ -1,85 +1,101 @@
-<!--
- * @Author       : mark
- * @Date         : 2020-06-30
- * @copyleft GPL 2.0
--->
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="zh-CN">
 <head>
-
-     <meta charset="UTF-8">
-
-     <title>MARK-首页</title>
-     <link rel="icon" href="images/favicon.ico">
-     <link rel="stylesheet" href="css/bootstrap.min.css">
-     <link rel="stylesheet" href="css/animate.css">
-     <link rel="stylesheet" href="css/magnific-popup.css">
-     <link rel="stylesheet" href="css/font-awesome.min.css">
-
-     <!-- Main css -->
-     <link rel="stylesheet" href="css/style.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博客天地</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .user-info-clickable {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .avatar, #username-display {
+            cursor: pointer;
+        }
+        
+        #logout-btn {
+            margin-left: 10px;
+        }
+    </style>
 </head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>博客天地</h1>
+            <nav id="navigation">
+                <a href="index.html">首页</a>
+                <a href="#">关于</a>
+                <div id="auth-buttons">
+                    <button id="register-btn" class="btn">注册</button>
+                    <button id="login-btn" class="btn">登录</button>
+                </div>
+                <button id="create-post-btn" class="btn">撰写文章</button>
+                <div class="user-profile" id="user-profile" style="display: none;">
+                    <a href="dashboard.html" class="user-info-clickable">
+                        <span id="username-display">用户</span>
+                    </a>
+                    <button id="logout-btn" class="btn">退出</button>
+                </div>
+            </nav>
+        </div>
+    </header>
+    <main>
+        <div class="grid" id="post-list">
+            <!-- 文章列表将通过 JavaScript 动态加载到这里 -->
+        </div>
+    </main>
+    <script src="script.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检查登录状态并更新导航栏
+            function updateNavigation() {
+                const token = localStorage.getItem('token');
+                const username = localStorage.getItem('username') || '用户';
+                const authButtons = document.getElementById('auth-buttons');
+                const userProfile = document.getElementById('user-profile');
+                const usernameDisplay = document.getElementById('username-display');
 
-<body data-spy="scroll" data-target=".navbar-collapse" data-offset="50">
+                if (token) {
+                    authButtons.style.display = 'none';
+                    userProfile.style.display = 'flex';
+                    usernameDisplay.textContent = username;
+                } else {
+                    authButtons.style.display = 'block';
+                    userProfile.style.display = 'none';
+                }
+            }
 
-     <!-- PRE LOADER -->
-     <div class="preloader">
-          <div class="spinner">
-               <span class="spinner-rotate"></span>
-          </div>
-     </div>
+            // 按钮跳转逻辑
+            document.getElementById('register-btn').addEventListener('click', () => {
+                window.location.href = 'register.html';
+            });
+            document.getElementById('login-btn').addEventListener('click', () => {
+                window.location.href = 'login.html';
+            });
+            document.getElementById('create-post-btn').addEventListener('click', () => {
+                window.location.href = 'create_post.html';
+            });
 
+            // 退出登录
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                localStorage.removeItem('token');
+                localStorage.removeItem('username');
+                alert('已退出登录！');
+                window.location.href = 'index.html';
+            });
 
-     <!-- NAVIGATION SECTION -->
-     <div class="navbar custom-navbar navbar-fixed-top" role="navigation">
-          <div class="container">
+            // 修改用户头像点击事件
+            document.querySelector('.user-info-clickable').addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.replace('dashboard.html');
+            });
 
-               <div class="navbar-header">
-                    <button class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                         <span class="icon icon-bar"></span>
-                         <span class="icon icon-bar"></span>
-                         <span class="icon icon-bar"></span>
-                    </button>
-                    <!-- lOGO TEXT HERE -->
-                    <a href="/" class="navbar-brand">Mark</a>
-               </div>
-               <div class="collapse navbar-collapse">
-                    <ul class="nav navbar-nav navbar-right">
-                         <li><a class="smoothScroll" href="/">首页</a></li>
-                         <li><a class="smoothScroll" href="/picture">图片</a></li>
-                         <li><a class="smoothScroll" href="/video">视频</a></li>
-                         <li><a class="smoothScroll" href="/login">登录</a></li>
-                         <li><a class="smoothScroll" href="/register">注册</a></li>
-                    </ul>
-               </div>
-
-          </div>
-     </div>
-     <!-- HOME SECTION -->
-     <section id="home">
-          <div class="container">
-               <div class="row">
-
-                    <div class="col-md-offset-1 col-md-2 col-sm-3">
-                         <img src="images/profile-image.jpg" class="wow fadeInUp img-responsive img-circle"
-                              data-wow-delay="0.2s" alt="about image">
-                    </div>
-                    <div class="col-md-8 col-sm-8">
-                         <h1 class="wow fadeInUp" data-wow-delay="0.6s">你好，这是首页。</h1>                    
-                    </div>
-               </div>
-          </div>
-     </section>
-     <!-- SCRIPTS -->
-     <script src="js/jquery.js"></script>
-     <script src="js/bootstrap.min.js"></script>
-     <script src="js/smoothscroll.js"></script>
-     <script src="js/jquery.magnific-popup.min.js"></script>
-     <script src="js/magnific-popup-options.js"></script>
-     <script src="js/wow.min.js"></script>
-     <script src="js/custom.js"></script>
+            // 初始化导航栏状态
+            updateNavigation();
+        });
+    </script>
 </body>
-
 </html>

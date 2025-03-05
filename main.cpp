@@ -7,7 +7,7 @@ int main()
 {
 
     WebServer server(30001, 3, 60000, false,
-                     3306, "root", "123456", "server_data",
+                     3306, "root", "123456", "blog_data",
                      12, 6, true, 1, 1024);
     server.start();
 

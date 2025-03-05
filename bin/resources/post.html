@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文章详情 - 博客天地</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .post-detail {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .post-title {
+            font-size: 2.2rem;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        .post-meta {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .post-content {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            color: #444;
+            margin-bottom: 2rem;
+        }
+
+        .post-content p {
+            margin-bottom: 1.5rem;
+        }
+
+        .actions {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.5rem 1.5rem;
+            margin-right: 1rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        #like-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .edit-controls {
+            display: none;
+            margin-left: 1rem;
+            display: inline-flex;
+            gap: 0.5rem;
+        }
+
+        #edit-btn {
+            background-color: #4a90e2;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        #delete-btn {
+            background-color: #e74c3c;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        #edit-btn:hover {
+            background-color: #357abd;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #delete-btn:hover {
+            background-color: #c0392b;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #edit-btn:active, #delete-btn:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        #edit-btn:disabled, #delete-btn:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .likes-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-right: 1rem;
+        }
+
+        .likes-count {
+            font-size: 0.9rem;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>文章详情</h1>
+            <nav>
+                <a href="javascript:history.back()" class="btn">返回上一页</a>
+                <a href="index.html" class="btn">返回首页</a>
+            </nav>
+        </div>
+    </header>
+    <main>
+        <article class="post-detail">
+            <h1 id="post-title" class="post-title"></h1>
+            <div id="post-meta" class="post-meta"></div>
+            <div id="post-content" class="post-content"></div>
+            <div class="actions">
+                <div class="likes-container">
+                    <button id="like-btn" class="btn">点赞</button>
+                    <span class="likes-count">0</span>
+                    <span>赞</span>
+                </div>
+                <div class="edit-controls">
+                    <button id="edit-btn">
+                        <i class="icon-edit"></i>编辑
+                    </button>
+                    <button id="delete-btn">
+                        <i class="icon-trash"></i>删除
+                    </button>
+                </div>
+            </div>
+        </article>
+        <section id="comments" class="comments-section">
+            <h3>评论</h3>
+            <div id="comment-list"></div>
+            <form id="comment-form" class="comment-form">
+                <textarea id="comment-content" name="content" placeholder="写下你的评论..." required></textarea>
+                <button type="submit" class="btn">发表评论</button>
+            </form>
+        </section>
+    </main>
+    <script src="script.js"></script>
+    <script>
+        const id = window.location.hash.substring(1);  // 去掉 # 号
+        if (id) {
+            // 加载文章内容
+            const token = localStorage.getItem('token');
+            fetch(`/blogs/getbyid/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`  // 添加 token 以检查点赞状态
+                }
+            })
+            .then(response => response.json())
+            .then(post => {
+                document.getElementById('post-title').textContent = post.title;
+                document.getElementById('post-content').innerHTML = `<p>${post.content}</p>`;
+                document.getElementById('post-meta').textContent = `作者：${post.author} | ${post.created_at}`;
+                
+                // 更新点赞按钮和点赞数
+                const likeBtn = document.getElementById('like-btn');
+                const likesCount = document.querySelector('.likes-count');
+                likesCount.textContent = post.likes_count || 0;
+                
+                // 根据用户是否已点赞设置按钮状态
+                if (post.is_liked) {
+                    likeBtn.classList.add('liked');
+                    likeBtn.textContent = '取消点赞';
+                } else {
+                    likeBtn.classList.remove('liked');
+                    likeBtn.textContent = '点赞';
+                }
+                
+                // 检查是否是文章作者
+                const currentUser = localStorage.getItem('username');
+                if (currentUser === post.author) {
+                    document.querySelector('.edit-controls').style.display = 'inline-block';
+                    // 添加编辑和删除按钮的事件监听
+                    document.getElementById('edit-btn').addEventListener('click', () => editPost(id));
+                    document.getElementById('delete-btn').addEventListener('click', () => deletePost(id));
+                }
+            })
+            .catch(error => console.error('加载文章失败:', error));
+
+            // 点赞按钮事件监听
+            document.getElementById('like-btn').addEventListener('click', () => toggleLike(id));
+            
+            // 评论表单事件监听
+            document.getElementById('comment-form').addEventListener('submit', (e) => createComment(e, id));
+            
+            // 加载评论
+            loadComments(id);
+        } else {
+            document.getElementById('post-title').textContent = '文章未找到';
+        }
+    </script>
+</body>
+</html>

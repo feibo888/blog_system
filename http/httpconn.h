@@ -15,6 +15,7 @@
 #include "../log/log.h"
 #include "../pool/sqlconnRAll.h"
 #include "../buffer/buffer.h"
+#include "../blog/blogmanager.h"
 #include "httprequest.h"
 #include "httpresponse.h"
 

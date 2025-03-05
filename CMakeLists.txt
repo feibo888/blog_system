@@ -17,6 +17,7 @@ aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/log LOG_SRC)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/pool POLL_SRC)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/server SERVER_SRC)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/timer TIMER_SRC)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/blog BLOG_SRC)
 
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
@@ -27,6 +28,7 @@ add_executable(${PROJECT_NAME}
                 ${LOG_SRC}
                 ${POLL_SRC}
                 ${SERVER_SRC}
-                ${TIMER_SRC})
+                ${TIMER_SRC}
+                ${BLOG_SRC})
 
 target_link_libraries(${PROJECT_NAME} mysqlclient pthread Boost::regex)

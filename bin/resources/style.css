@@ -1,0 +1,689 @@
+/* 全局样式 */
+body {
+    font-family: 'Noto Serif SC', serif;
+    margin: 0;
+    padding: 0;
+    background-color: #F8F1E9;
+    color: #1E3A8A;
+    line-height: 1.6;
+}
+
+/* 头部 */
+header {
+    background: linear-gradient(135deg, #1E3A8A, #3B82F6);
+    color: #F8F1E9;
+    padding: 20px 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+}
+
+nav a, nav button {
+    color: #F8F1E9;
+    text-decoration: none;
+    margin: 0 15px;
+    font-size: 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+nav a:hover, nav button:hover {
+    color: #D4A017;
+}
+
+/* 主体 */
+main {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 20px;
+}
+
+/* 文章网格布局 */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 0 auto;
+    max-width: 800px;
+}
+
+/* 文章卡片样式 */
+.post-item {
+    position: relative;
+    padding: 1rem;
+    margin-bottom: 0.4rem;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    height: 120px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+/* 文章标题样式 */
+.post-item .post-title {
+    font-size: 1.1rem;
+    color: #333;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+    flex: 1;
+}
+
+/* 文章元信息样式 */
+.post-item .post-meta {
+    color: #666;
+    font-size: 0.8rem;
+    margin-bottom: 0.4rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 文章统计信息样式 */
+.post-item .post-stats {
+    display: flex;
+    gap: 0.6rem;
+    color: #666;
+    font-size: 0.75rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid #f0f0f0;
+    margin-top: auto;
+}
+
+/* 悬停效果 */
+.post-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.post-item:hover .post-title {
+    color: #007bff;
+}
+
+/* 文章元信息样式 */
+.post-meta {
+    color: #666;
+    font-size: 0.75rem;
+    margin-bottom: 0.3rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.post-meta span {
+    margin-right: 0.4rem;
+}
+
+/* 文章统计信息样式 */
+.post-stats {
+    display: flex;
+    gap: 0.5rem;
+    color: #666;
+    font-size: 0.7rem;
+    margin-top: auto;
+    padding-top: 0.3rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.post-stats span {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.post-stats i {
+    margin-right: 0.2rem;
+    font-size: 0.7rem;
+}
+
+.icon-eye::before {
+    content: "👁️";
+}
+
+.icon-heart::before {
+    content: "❤️";
+}
+
+.icon-comment::before {
+    content: "💬";
+}
+
+.author {
+    color: #007bff;
+}
+
+.date {
+    color: #666;
+}
+
+/* 抽屉 */
+.drawer {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100%;
+    background: white;
+    box-shadow: -4px 0 10px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease;
+}
+
+.drawer.active {
+    right: 0;
+}
+
+.drawer-content {
+    padding: 30px;
+}
+
+.close {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+}
+
+.close:hover {
+    color: #1E3A8A;
+}
+
+/* 表单 */
+form input, form textarea {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border: 1px solid #D4A017;
+    border-radius: 8px;
+    font-size: 16px;
+    box-sizing: border-box;
+}
+
+form textarea {
+    height: 150px;
+    resize: vertical;
+}
+
+/* 按钮 */
+.btn {
+    padding: 12px 20px;
+    background: #1E3A8A;
+    color: #F8F1E9;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn:hover {
+    background: #D4A017;
+}
+
+.btn-danger {
+    background: #DC2626;
+}
+
+.btn-danger:hover {
+    background: #B91C1C;
+}
+
+/* 文章详情 */
+.post-detail {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 3rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.post-title {
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 1.5rem;
+    line-height: 1.3;
+}
+
+.post-meta {
+    color: #666;
+    font-size: 0.95rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eee;
+}
+
+.post-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: #2c3e50;
+    margin-bottom: 3rem;
+    min-height: 300px;
+}
+
+.post-content p {
+    margin-bottom: 1.5rem;
+}
+
+.actions {
+    margin: 2rem 0;
+    padding: 1rem 0;
+    border-top: 1px solid #eee;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* 评论区 */
+#comments {
+    margin-top: 40px;
+}
+
+#comments h3 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.comment-item {
+    background: white;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.comment-item p {
+    margin: 0;
+    font-size: 16px;
+}
+
+.comment-item button {
+    float: right;
+    background: #DC2626;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.comment-item button:hover {
+    background: #B91C1C;
+}
+
+
+/* 用户中心和个人资料样式 */
+.dashboard-container, .form-container {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.05);
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.stats, .profile-info {
+    margin-top: 20px;
+    padding: 15px;
+    background: #F8F1E9;
+    border-radius: 8px;
+}
+
+.stats p, .profile-info p {
+    margin: 10px 0;
+    font-size: 16px;
+    color: #1E3A8A;
+}
+
+
+/* 头像和用户图标 */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #D4A017;
+    object-fit: cover;
+}
+
+/* 通知区 */
+.notifications {
+    margin-top: 20px;
+    padding: 15px;
+    background: #F8F1E9;
+    border-radius: 8px;
+}
+
+.notifications h3 {
+    margin-bottom: 10px;
+    color: #1E3A8A;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* 确保元素间距一致 */
+}
+
+/* 添加仪表盘操作按钮样式 */
+.dashboard-actions {
+    margin-bottom: 20px;
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.dashboard-actions .btn {
+    margin-right: 10px;
+}
+
+/* 修改用户头像样式，移除鼠标指针样式 */
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* 表单组样式 */
+.form-group {
+    margin-bottom: 15px;
+}
+
+/* 错误消息样式 */
+.error {
+    color: #DC2626;
+    margin: 10px 0;
+    font-size: 14px;
+}
+
+/* 密码修改表单样式 */
+#update-profile-form {
+    max-width: 400px;
+    margin: 20px 0;
+}
+
+#update-profile-form input {
+    margin-bottom: 10px;
+}
+
+/* 导航按钮样式 */
+nav .btn {
+    display: inline-block;
+    padding: 8px 16px;
+    margin-left: 10px;
+    background-color: #fff;
+    color: #1E3A8A;
+    border: 1px solid #1E3A8A;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+nav .btn:hover {
+    background-color: #1E3A8A;
+    color: #fff;
+}
+
+/* 当前页面的导航按钮 */
+nav .btn.active {
+    background-color: #1E3A8A;
+    color: #fff;
+}
+
+/* 评论区样式更新 */
+.comments-section {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.comments-section h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: #444;
+}
+
+.comment-item {
+    background: white;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.comment-form {
+    margin-top: 2rem;
+}
+
+.comment-form textarea {
+    width: 100%;
+    height: 100px;
+    padding: 0.8rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+    margin-bottom: 1rem;
+}
+
+.comment-item {
+    background: #f8f9fa;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    transition: margin-left 0.3s ease;
+}
+
+.comment-content {
+    margin-bottom: 10px;
+}
+
+.comment-meta {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 8px 0;
+}
+
+.comment-author {
+    font-weight: 500;
+    color: #1E3A8A;
+    margin-right: 10px;
+}
+
+.comment-date {
+    color: #666;
+}
+
+.comment-likes {
+    margin-left: 10px;
+}
+
+.comment-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.comment-actions button {
+    padding: 4px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background-color 0.3s;
+}
+
+.comment-actions button:hover {
+    opacity: 0.9;
+}
+
+/* 回复表单样式 */
+#reply-form {
+    margin: 10px 0;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.reply-to {
+    color: #1E3A8A;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+#reply-content {
+    width: 100%;
+    min-height: 80px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    resize: vertical;
+}
+
+#reply-form button {
+    padding: 6px 12px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#reply-form button:first-of-type {
+    background: #1E3A8A;
+    color: white;
+}
+
+#reply-form button:last-of-type {
+    background: #6c757d;
+    color: white;
+}
+
+/* 嵌套评论的缩进效果 */
+.comment-item .comment-item {
+    margin-left: 20px;
+    border-left: 2px solid #1E3A8A;
+}
+
+.likes-count {
+    margin: 0 5px;
+    color: #666;
+}
+
+#like-btn.liked {
+    background-color: #1E3A8A;
+    color: white;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* 响应式布局 */
+@media (max-width: 768px) {
+    .post-detail {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+
+    .post-title {
+        font-size: 2rem;
+    }
+
+    .post-content {
+        font-size: 1rem;
+    }
+
+    .comments-section {
+        padding: 1rem;
+        margin: 1rem;
+    }
+
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .post-item {
+        height: 90px;
+    }
+
+    .post-title {
+        font-size: 0.85rem;
+    }
+
+    .post-meta {
+        font-size: 0.7rem;
+    }
+
+    .post-stats {
+        font-size: 0.65rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .post-item {
+        height: 80px;
+    }
+}
+
+/* 移除重复的 post-title 样式定义 */
+.post-detail .post-title {
+    font-size: 2.5rem;
+    color: #333;
+    margin-bottom: 1.5rem;
+    line-height: 1.3;
+}
+
+/* 用户头像样式 */
+.user-info-clickable {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: inherit;
+}
+
+#username-display {
+    position: relative;
+    padding-left: 1.8rem;
+}
+
+#username-display::before {
+    content: '👤';
+    position: absolute;
+    left: 0;
+    font-size: 1.2rem;
+}

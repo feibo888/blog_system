@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上传 Markdown 文章 - 博客天地</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .upload-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .file-input-container {
+            margin: 20px 0;
+        }
+
+        .preview-container {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>上传 Markdown 文章</h1>
+            <nav>
+                <a href="index.html">返回首页</a>
+            </nav>
+        </div>
+    </header>
+    <main>
+        <div class="upload-container">
+            <form id="upload-form">
+                <div class="form-group">
+                    <label for="title">文章标题</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div class="file-input-container">
+                    <label for="markdown-file">选择 Markdown 文件</label>
+                    <input type="file" id="markdown-file" accept=".md,.markdown" required>
+                </div>
+                <div class="preview-container" id="preview">
+                    <h3>文件预览</h3>
+                    <div id="file-content"></div>
+                </div>
+                <button type="submit" class="btn">上传文章</button>
+            </form>
+        </div>
+    </main>
+    <script>
+        document.getElementById('markdown-file').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                document.getElementById('file-content').textContent = content;
+                document.getElementById('preview').style.display = 'block';
+            };
+            reader.readAsText(file);
+        });
+
+        document.getElementById('upload-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('title').value;
+            const file = document.getElementById('markdown-file').files[0];
+            
+            if (!title || !file) {
+                alert('请填写标题并选择文件！');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('title', title);
+            formData.append('file', file);
+            formData.append('content_type', 'markdown');
+
+            const token = localStorage.getItem('token');
+            fetch('/blogs/upload', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('文章上传成功！');
+                    window.location.href = 'index.html';
+                } else {
+                    alert(data.message || '上传失败');
+                }
+            })
+            .catch(error => {
+                console.error('上传失败:', error);
+                alert('上传失败，请稍后重试');
+            });
+        });
+    </script>
+</body>
+</html> 

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑文章 - 博客天地</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .edit-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            color: #333;
+        }
+
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .form-group textarea {
+            min-height: 300px;
+            resize: vertical;
+        }
+
+        .button-group {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            color: white;
+            padding: 0.8rem 2rem;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>编辑文章</h1>
+            <nav>
+                <a href="javascript:history.back()" class="btn btn-secondary">返回</a>
+            </nav>
+        </div>
+    </header>
+    <main>
+        <div class="edit-container">
+            <form id="blog-form" onsubmit="createPost(event)">
+                <div class="form-group">
+                    <label for="title">文章标题</label>
+                    <input type="text" id="title" name="title" required placeholder="文章标题">
+                </div>
+                <div class="form-group">
+                    <label for="content">文章内容</label>
+                    <textarea id="content" name="content" required placeholder="文章内容"></textarea>
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">发布文章</button>
+                    <button type="button" class="btn btn-secondary" onclick="history.back()">取消</button>
+                </div>
+            </form>
+        </div>
+    </main>
+    <script src="script.js"></script>
+    <script>
+        // 获取文章ID
+        const id = window.location.hash.substring(1);
+        
+        // 如果没有登录，跳转到登录页面
+        if (!checkLoginStatus()) {
+            window.location.href = 'login.html';
+        }
+
+        // 加载文章内容
+        if (id) {
+            fetch(`/blogs/getbyid/${id}`)
+                .then(response => response.json())
+                .then(post => {
+                    document.getElementById('title').value = post.title;
+                    document.getElementById('content').value = post.content;
+                })
+                .catch(error => {
+                    console.error('加载文章失败:', error);
+                    alert('加载文章失败，请稍后重试');
+                });
+        }
+
+        // 处理表单提交
+        document.getElementById('blog-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            const token = localStorage.getItem('token');
+
+            fetch(`/blogs/posts/${id}`, {
+                method: 'PUT',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ title, content })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('文章更新成功！');
+                    window.location.href = `post.html#${id}`;
+                } else {
+                    alert('更新失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('编辑文章失败:', error);
+                alert('更新失败，请稍后重试');
+            });
+        });
+    </script>
+</body>
+</html> 

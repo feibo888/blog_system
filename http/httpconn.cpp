@@ -128,11 +128,11 @@ bool HttpConn::process()
     else if (request_.parse(readBuf_))      //解析请求报文
     {
         LOG_DEBUG("%s", request_.path().c_str());
-        response_.Init(srcDir, request_.path(), request_.IsKeepAlive(), 200);
+        response_.Init(srcDir, request_.path(), request_.method(), request_.GetPost(), request_.GetHeader(), request_.IsKeepAlive(), 200, request_.IsDynamic());
     }
     else
     {
-        response_.Init(srcDir, request_.path(), false, 400);
+        response_.Init(srcDir, request_.path(), request_.method(), request_.GetPost(), request_.GetHeader(), false, 400, request_.IsDynamic());
     }
 
     //生成响应报文

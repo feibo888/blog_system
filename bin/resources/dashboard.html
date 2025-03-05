@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户中心 - 博客天地</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+        }
+
+        .sidebar {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: fit-content;
+        }
+
+        .main-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .user-info {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .user-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-bottom: 1rem;
+            cursor: pointer;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .nav-menu {
+            list-style: none;
+            padding: 0;
+        }
+
+        .nav-menu li {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-menu a {
+            display: block;
+            padding: 0.8rem 1rem;
+            color: #333;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+
+        .nav-menu a:hover,
+        .nav-menu a.active {
+            background: #f0f0f0;
+        }
+
+        /* 个人资料表单样式 */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* 文章列表样式 */
+        .post-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+
+        .post-item:last-child {
+            border-bottom: none;
+        }
+
+        /* 通知样式 */
+        .notification-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            background: #fff;
+        }
+
+        .notification-unread {
+            background: #f8f9fa;
+        }
+
+        .btn-save {
+            background-color: #007bff;
+            color: white;
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .btn-save:hover {
+            background-color: #0056b3;
+        }
+
+        /* 在现有样式后添加 */
+        .post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .post-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-edit {
+            background-color: #28a745;
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-edit:hover {
+            background-color: #218838;
+        }
+
+        .btn-delete:hover {
+            background-color: #c82333;
+        }
+
+        .post-stats {
+            display: flex;
+            gap: 1rem;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .post-item {
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: white;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            transition: box-shadow 0.3s ease;
+        }
+
+        .post-item:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <h1>用户中心</h1>
+            <nav>
+                <a href="index.html">返回首页</a>
+            </nav>
+        </div>
+    </header>
+    <main>
+        <div class="dashboard-container">
+            <aside class="sidebar">
+                <div class="user-info">
+                    <img id="user-avatar" src="default-avatar.png" alt="用户头像" class="user-avatar">
+                    <h3 id="user-nickname">加载中...</h3>
+                    <p id="user-bio">加载中...</p>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div id="posts-count" class="stat-number">0</div>
+                        <div class="stat-label">文章</div>
+                    </div>
+                    <div class="stat-item">
+                        <div id="likes-count" class="stat-number">0</div>
+                        <div class="stat-label">获赞</div>
+                    </div>
+                    <div class="stat-item">
+                        <div id="followers-count" class="stat-number">0</div>
+                        <div class="stat-label">关注者</div>
+                    </div>
+                    <div class="stat-item">
+                        <div id="following-count" class="stat-number">0</div>
+                        <div class="stat-label">关注</div>
+                    </div>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="#profile" class="active">个人资料</a></li>
+                    <li><a href="#posts">我的文章</a></li>
+                    <li><a href="#likes">我的点赞</a></li>
+                    <li><a href="#favorites">我的收藏</a></li>
+                    <li><a href="#notifications">通知中心</a></li>
+                </ul>
+            </aside>
+            <div class="main-content">
+                <!-- 个人资料 -->
+                <div id="profile-tab" class="tab-content active">
+                    <h2>个人资料</h2>
+                    <form id="profile-form">
+                        <div class="form-group">
+                            <label for="nickname">昵称</label>
+                            <input type="text" id="nickname" name="nickname">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">邮箱</label>
+                            <input type="email" id="email" name="email">
+                        </div>
+                        <div class="form-group">
+                            <label for="avatar">头像URL</label>
+                            <input type="url" id="avatar" name="avatar_url">
+                        </div>
+                        <div class="form-group">
+                            <label for="gender">性别</label>
+                            <select id="gender" name="gender">
+                                <option value="">请选择</option>
+                                <option value="male">男</option>
+                                <option value="female">女</option>
+                                <option value="other">其他</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="birth_date">出生日期</label>
+                            <input type="date" id="birth_date" name="birth_date">
+                        </div>
+                        <div class="form-group">
+                            <label for="location">所在地</label>
+                            <input type="text" id="location" name="location">
+                        </div>
+                        <div class="form-group">
+                            <label for="website">个人网站</label>
+                            <input type="url" id="website" name="website">
+                        </div>
+                        <div class="form-group">
+                            <label for="bio">个人简介</label>
+                            <textarea id="bio" name="bio"></textarea>
+                        </div>
+                        <button type="submit" class="btn-save">保存修改</button>
+                    </form>
+                </div>
+
+                <!-- 我的文章 -->
+                <div id="posts-tab" class="tab-content">
+                    <h2>我的文章</h2>
+                    <div id="user-posts"></div>
+                </div>
+
+                <!-- 我的点赞 -->
+                <div id="likes-tab" class="tab-content">
+                    <h2>我的点赞</h2>
+                    <div id="user-likes"></div>
+                </div>
+
+                <!-- 我的收藏 -->
+                <div id="favorites-tab" class="tab-content">
+                    <h2>我的收藏</h2>
+                    <div id="user-favorites"></div>
+                </div>
+
+                <!-- 通知中心 -->
+                <div id="notifications-tab" class="tab-content">
+                    <h2>通知中心</h2>
+                    <div id="user-notifications"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="script.js"></script>
+    <script>
+        // 在页面开始加载时就检查登录状态
+        if (!checkLoginStatus()) {
+            window.location.href = 'login.html';
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // 只有在确认登录状态后才开始加载用户信息
+            loadBasicUserInfo();
+            loadProfileData();
+
+            // 标签切换事件监听
+            document.querySelectorAll('.nav-menu a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // 更新活动标签
+                    document.querySelectorAll('.nav-menu a').forEach(a => a.classList.remove('active'));
+                    e.target.classList.add('active');
+                    
+                    // 显示对应内容
+                    const tabId = e.target.getAttribute('href').substring(1);
+                    document.querySelectorAll('.tab-content').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+
+                    // 根据标签加载对应内容
+                    switch(tabId) {
+                        case 'profile':
+                            loadProfileData();
+                            break;
+                        case 'posts':
+                            loadUserPosts();
+                            break;
+                        case 'likes':
+                            loadUserLikes();
+                            break;
+                        case 'favorites':
+                            loadUserFavorites();
+                            break;
+                        case 'notifications':
+                            loadNotifications();
+                            break;
+                    }
+                });
+            });
+        });
+
+        const username = localStorage.getItem('username');
+
+        // 加载用户文章
+        function loadUserPosts() {
+            const username = localStorage.getItem('username');
+            fetch(`/blogs/user/${username}/posts`)
+                .then(response => response.json())
+                .then(posts => {
+                    const container = document.getElementById('user-posts');
+                    container.innerHTML = '';
+                    if (posts.length === 0) {
+                        container.innerHTML = '<p>还没有发布过文章哦~</p>';
+                        return;
+                    }
+                    
+                    posts.forEach(post => {
+                        const div = document.createElement('div');
+                        div.className = 'post-item';
+                        div.innerHTML = `
+                            <div class="post-header">
+                                <a href="post.html#${post.id}" class="post-title">${post.title}</a>
+                                <div class="post-actions">
+                                    <a href="edit.html#${post.id}" class="btn-edit">编辑</a>
+                                    <button onclick="deletePost(${post.id})" class="btn-delete">删除</button>
+                                </div>
+                            </div>
+                            <div class="post-meta">
+                                <span class="date">发布于：${formatDate(post.created_at)}</span>
+                                <div class="post-stats">
+                                    <span class="views"><i class="icon-eye"></i> ${post.views || 0} 次浏览</span>
+                                    <span class="likes"><i class="icon-heart"></i> ${post.likes_count || 0} 人点赞</span>
+                                    <span class="comments"><i class="icon-comment"></i> ${post.comments_count || 0} 条评论</span>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(div);
+                    });
+
+                    // 更新文章统计
+                    document.getElementById('posts-count').textContent = posts.length;
+                })
+                .catch(error => {
+                    console.error('加载用户文章失败:', error);
+                    document.getElementById('user-posts').innerHTML = 
+                        '<p class="error">加载文章失败，请稍后重试</p>';
+                });
+        }
+
+        // 删除文章函数
+        function deletePost(id) {
+            if (!confirm('确定要删除这篇文章吗？此操作不可恢复！')) {
+                return;
+            }
+
+            const token = localStorage.getItem('token');
+            fetch(`/blogs/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('文章已删除');
+                    loadUserPosts(); // 重新加载文章列表
+                } else {
+                    alert('删除失败：' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('删除文章失败:', error);
+                alert('删除失败，请稍后重试');
+            });
+        }
+
+        // 加载用户点赞的文章
+        function loadUserLikes() {
+            fetch(`/blogs/user/${username}/likes`)
+                .then(response => response.json())
+                .then(posts => {
+                    const container = document.getElementById('user-likes');
+                    container.innerHTML = posts.map(post => `
+                        <div class="post-item">
+                            <a href="post.html#${post.id}">${post.title}</a>
+                            <p>作者：${post.author} | ${formatDate(post.created_at)}</p>
+                        </div>
+                    `).join('');
+                })
+                .catch(error => console.error('加载点赞文章失败:', error));
+        }
+
+        // 加载用户收藏的文章
+        function loadUserFavorites() {
+            fetch(`/blogs/user/${username}/favorites`)
+                .then(response => response.json())
+                .then(posts => {
+                    const container = document.getElementById('user-favorites');
+                    container.innerHTML = posts.map(post => `
+                        <div class="post-item">
+                            <a href="post.html#${post.id}">${post.title}</a>
+                            <p>作者：${post.author} | ${formatDate(post.created_at)}</p>
+                        </div>
+                    `).join('');
+                })
+                .catch(error => console.error('加载收藏文章失败:', error));
+        }
+
+        // 加载通知
+        function loadNotifications() {
+            fetch(`/blogs/user/${username}/notifications`)
+                .then(response => response.json())
+                .then(notifications => {
+                    const container = document.getElementById('user-notifications');
+                    container.innerHTML = notifications.map(notification => `
+                        <div class="notification-item ${notification.is_read ? '' : 'notification-unread'}">
+                            <p>${notification.content}</p>
+                            <small>${formatDate(notification.created_at)}</small>
+                        </div>
+                    `).join('');
+                })
+                .catch(error => console.error('加载通知失败:', error));
+        }
+
+        // 加载基本用户信息（用于侧边栏显示）
+        function loadBasicUserInfo() {
+            fetch(`/blogs/user/${username}/basic`)
+                .then(response => response.json())
+                .then(user => {
+                    document.getElementById('user-nickname').textContent = user.nickname || username;
+                    document.getElementById('user-bio').textContent = user.bio || '这个人很懒，什么都没写~';
+                    if (user.avatar_url) {
+                        document.getElementById('user-avatar').src = user.avatar_url;
+                    }
+                    
+                    // 更新统计数据
+                    document.getElementById('posts-count').textContent = user.posts_count || 0;
+                    document.getElementById('likes-count').textContent = user.likes_received || 0;
+                    document.getElementById('followers-count').textContent = user.followers_count || 0;
+                    document.getElementById('following-count').textContent = user.following_count || 0;
+                })
+                .catch(error => console.error('加载基本用户信息失败:', error));
+        }
+
+        // 加载详细的个人资料数据
+        function loadProfileData() {
+            fetch(`/blogs/user/${username}/profile`)
+                .then(response => response.json())
+                .then(user => {
+                    // 填充表单
+                    document.getElementById('nickname').value = user.nickname || '';
+                    document.getElementById('email').value = user.email || '';
+                    document.getElementById('avatar').value = user.avatar_url || '';
+                    document.getElementById('gender').value = user.gender || '';
+                    document.getElementById('birth_date').value = user.birth_date || '';
+                    document.getElementById('location').value = user.location || '';
+                    document.getElementById('website').value = user.website || '';
+                    document.getElementById('bio').value = user.bio || '';
+                })
+                .catch(error => console.error('加载用户资料失败:', error));
+        }
+    </script>
+</body>
+</html> 

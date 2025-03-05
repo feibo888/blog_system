@@ -3,6 +3,10 @@
 //
 
 #include "httprequest.h"
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <sstream>
+
 using namespace std;
 
 const unordered_set<string> HttpRequest::DEFAULT_HTML
@@ -20,6 +24,7 @@ void HttpRequest::Init()
 {
     method_ = path_ = version_ = body_ = "";
     state_ = REQUEST_LINE;
+    isDynamic_ = false;
     header_.clear();
     post_.clear();
 }
@@ -114,6 +119,16 @@ std::string HttpRequest::GetPost(const char* key) const
     return "";
 }
 
+std::unordered_map<std::string, std::string> HttpRequest::GetPost() const
+{
+    return post_;
+}
+
+std::unordered_map<std::string, std::string> HttpRequest::GetHeader() const
+{
+    return header_;
+}
+
 bool HttpRequest::IsKeepAlive() const
 {
     if (header_.count("Connection") == 1)
@@ -142,14 +157,56 @@ bool HttpRequest::ParseRequestLine_(const std::string& line)
     {
         method_ = subMatch[1];
         path_ = subMatch[2];
+        //string fullPath = subMatch[2];
         version_ = subMatch[3];
         state_ = HEADERS;
+
+        // 解析完整的路径和查询参数
+        // size_t queryPos = fullPath.find('?');
+        // if (queryPos != string::npos) 
+        // {
+        //     path_ = fullPath.substr(0, queryPos); // 提取路径部分
+        //     string query = fullPath.substr(queryPos + 1); // 提取查询参数
+        //     parseQueryString(query); // 解析查询参数到 post_ 映射
+        // } 
+        // else 
+        // {
+        //     path_ = fullPath;
+        // }
         LOG_DEBUG("%s, %s, %s", method_.c_str(), path_.c_str(), version_.c_str());
         return true;
     }
 
     LOG_ERROR("RequestLine Error");
     return false;
+}
+
+// 解析查询字符串（如 ?key=value&key2=value2）
+void HttpRequest::parseQueryString(const std::string& query) {
+    std::string key, value;
+    int i = 0, j = 0, n = query.size();
+    for (; i < n; ++i) {
+        char ch = query[i];
+        switch (ch) {
+        case '=':
+            key = query.substr(j, i - j);
+            j = i + 1;
+            break;
+        case '&':
+            value = query.substr(j, i - j);
+            j = i + 1;
+            post_[key] = value;
+            LOG_DEBUG("%s = %s", key.c_str(), value.c_str());
+            break;
+        default:
+            break;
+        }
+    }
+    if (j < n) {
+        value = query.substr(j, n - j);
+        post_[key] = value;
+        LOG_DEBUG("%s = %s", key.c_str(), value.c_str());
+    }
 }
 
 void HttpRequest::ParseHeader_(const std::string& line)
@@ -172,7 +229,18 @@ void HttpRequest::ParseHeader_(const std::string& line)
 void HttpRequest::ParseBody_(const std::string& line)
 {
     body_ = line;
-    ParsePost_();
+    
+    // 检查是否是文件上传请求
+    if (header_["Content-Type"].find("multipart/form-data") != std::string::npos) {
+        ParseMultipartFormData_(line);
+    }
+    else if (header_["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos) {
+        ParseFromUrlencoded_();
+    }
+    else if (header_["Content-Type"].find("application/json") != std::string::npos) {
+        ParseJson_();
+    }
+    
     state_ = FINISH;
     LOG_DEBUG("Body:%s, len:%d", line.c_str(), line.size());
 }
@@ -182,6 +250,38 @@ void HttpRequest::ParsePath_()
     if (path_ == "/")
     {
         path_ = "index.html";
+    }
+    else if (path_ == "/login")
+    {
+        path_ = "/login.html";
+    } 
+    else if (path_ == "/register") 
+    {
+        path_ = "/register.html";
+    }
+    // 博客相关的动态路由
+    else if (path_.rfind("/blogs/", 0) == 0)
+    {
+        isDynamic_ = true;
+        // 保持原始路径，由响应处理器处理
+    }
+    else if (path_.rfind("/comments", 0) == 0)
+    {
+        isDynamic_ = true;
+        // 保持原始路径，由响应处理器处理
+    }
+    else if (path_.rfind("/likes", 0) == 0)
+    {
+        isDynamic_ = true;
+        // 保持原始路径，由响应处理器处理
+    }
+    // 用户相关的动态路由
+    else if (path_.rfind("/user/", 0) == 0 || 
+             path_.rfind("/login/", 0) == 0 || 
+             path_.rfind("/register/", 0) == 0)
+    {
+        isDynamic_ = true;
+        // 保持原始路径，由响应处理器处理
     }
     else
     {
@@ -199,26 +299,97 @@ void HttpRequest::ParsePath_()
 void HttpRequest::ParsePost_()
 {
 
-    if (method_ == "POST" && header_["Content-Type"] == "application/x-www-form-urlencoded")
+    // if (method_ == "POST" && header_["Content-Type"] == "application/x-www-form-urlencoded")
+    // {
+    //     ParseFromUrlencoded_();
+
+    //     if (DEFAULT_HTML_TAG.count(path_))
+    //     {
+    //         int tag = DEFAULT_HTML_TAG.find(path_)->second;
+    //         LOG_DEBUG("Tag:%d", tag);
+    //         if (tag == 0 || tag == 1)
+    //         {
+    //             bool isLogin = (tag == 1);
+    //             if (UserVerify(post_["username"], post_["password"], isLogin))
+    //             {
+    //                 path_ = "/user_dashboard.html";
+    //             }
+    //             else
+    //             {
+    //                 path_ = "/index.html";
+    //             }
+    //         }
+    //     }
+    //     else if (path_ == "/api/posts") 
+    //     {
+    //         // 创建文章
+    //         if (BlogManager::CreateBlog(post_["title"], post_["content"], "admin")) 
+    //         {  
+    //             path_ = "/api/posts";  // 重定向到列表（实际由响应处理）
+    //         } 
+    //         else
+    //         {
+    //             path_ = "/error.html";  // 错误页面（后续改为 JSON 错误）
+    //         }
+    //     }
+    // }
+
+    if (method_ == "POST" && header_["Content-Type"] == "application/x-www-form-urlencoded") 
     {
         ParseFromUrlencoded_();
 
-        if (DEFAULT_HTML_TAG.count(path_))
+        if (DEFAULT_HTML_TAG.count(path_)) 
         {
             int tag = DEFAULT_HTML_TAG.find(path_)->second;
             LOG_DEBUG("Tag:%d", tag);
-            if (tag == 0 || tag == 1)
+            if (tag == 0 || tag == 1) 
             {
                 bool isLogin = (tag == 1);
-                if (UserVerify(post_["username"], post_["password"], isLogin))
+                std::string login_or_register = isLogin ? "login" : "register";
+                if (UserVerify(post_["username"], post_["password"], isLogin)) 
                 {
-                    path_ = "/welcome.html";
+                    // 修改为返回 JSON 响应，而不是 HTML
+                    path_ = "/" + login_or_register + "/success";
+                    
                 }
-                else
+                else 
                 {
-                    path_ = "/error.html";
+                    path_ = "/" + login_or_register + "/error";
                 }
             }
+            isDynamic_ = true; // 标记为动态请求
+        } 
+        else if (path_ == "/posts") 
+        {
+            // 创建文章
+            if (BlogManager::CreateBlog(post_["title"], post_["content"], "admin")) 
+            {
+                path_ = "/posts";  // 重定向到列表（实际由响应处理）
+            } 
+            else 
+            {
+                path_ = "/posts/error";  // 错误页面（后续改为 JSON 错误）
+            }
+            isDynamic_ = true; // 标记为动态请求
+        } 
+        else if (path_.rfind("/user/", 0) == 0 && method_ == "PUT") 
+        {
+            string username = path_.substr(10); // 提取 username
+            // 获取新密码，优先使用 "password" 字段，如果不存在则使用 "new-password"
+            string newPassword = post_["password"];
+            if (newPassword.empty()) 
+            {
+                newPassword = post_["new-password"];
+            }
+            if (BlogManager::UpdateUser(username, newPassword)) 
+            {
+                path_ = "/user/" + username;
+            } 
+            else 
+            {
+                path_ = "/user/" + username + "/error";
+            }
+            isDynamic_ = true; // 标记为动态请求
         }
     }
 }
@@ -375,4 +546,84 @@ int HttpRequest::ConverHex(char ch)
     if (ch >= 'A' && ch <= 'F') return ch - 'A' + 10;
     if (ch >= 'a' && ch <= 'f') return ch - 'a' + 10;
     return ch;
+}
+
+// 新增 JSON 解析函数
+void HttpRequest::ParseJson_() {
+    try {
+        boost::property_tree::ptree pt;
+        std::stringstream ss(body_);
+        boost::property_tree::read_json(ss, pt);
+
+        // 遍历 JSON 对象的所有字段
+        for (const auto& pair : pt) {
+            if (pair.second.empty()) {  // 如果是简单值
+                post_[pair.first] = pair.second.data();
+                LOG_DEBUG("JSON field: %s = %s", pair.first.c_str(), pair.second.data().c_str());
+            } else {  // 如果是数组或对象，转换为字符串
+                std::stringstream value_ss;
+                boost::property_tree::write_json(value_ss, pair.second);
+                post_[pair.first] = value_ss.str();
+                LOG_DEBUG("JSON complex field: %s = %s", pair.first.c_str(), value_ss.str().c_str());
+            }
+        }
+    } catch (const std::exception& e) {
+        LOG_ERROR("JSON parse error: %s", e.what());
+    }
+}
+
+void HttpRequest::ParseMultipartFormData_(const std::string& body) {
+    // 获取boundary
+    std::string boundary = header_["Content-Type"];
+    size_t pos = boundary.find("boundary=");
+    if (pos == std::string::npos) return;
+    boundary = "--" + boundary.substr(pos + 9);
+
+    // 分割每个部分
+    std::vector<std::string> parts;
+    size_t start = 0;
+    while ((pos = body.find(boundary, start)) != std::string::npos) {
+        if (start > 0) {
+            parts.push_back(body.substr(start, pos - start - 2)); // -2 去掉CRLF
+        }
+        start = pos + boundary.length() + 2; // +2 跳过CRLF
+    }
+
+    // 处理每个部分
+    for (const auto& part : parts) {
+        // 查找头部和内容的分隔
+        pos = part.find("\r\n\r\n");
+        if (pos == std::string::npos) continue;
+
+        // 解析头部
+        std::string headers = part.substr(0, pos);
+        std::string content = part.substr(pos + 4); // +4 跳过两个CRLF
+
+        // 获取字段名
+        std::string name;
+        size_t name_pos = headers.find("name=\"");
+        if (name_pos != std::string::npos) {
+            name_pos += 6;
+            size_t name_end = headers.find("\"", name_pos);
+            if (name_end != std::string::npos) {
+                name = headers.substr(name_pos, name_end - name_pos);
+            }
+        }
+
+        // 如果是文件
+        if (headers.find("filename=\"") != std::string::npos) {
+            size_t filename_pos = headers.find("filename=\"");
+            if (filename_pos != std::string::npos) {
+                filename_pos += 10;
+                size_t filename_end = headers.find("\"", filename_pos);
+                if (filename_end != std::string::npos) {
+                    post_["filename"] = headers.substr(filename_pos, filename_end - filename_pos);
+                }
+            }
+            post_["file_content"] = content;
+        } else {
+            // 普通表单字段
+            post_[name] = content;
+        }
+    }
 }

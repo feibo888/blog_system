@@ -8,8 +8,8 @@
 
 #include <unordered_map>
 #include <unordered_set>
-#include <string>
-#include <regex>
+//#include <string>
+//#include <regex>
 #include <errno.h>
 #include <mysql/mysql.h>  //mysql
 #include <boost/regex.hpp>
@@ -18,6 +18,7 @@
 #include "../log/log.h"
 #include "../pool/sqlconnpool.h"
 #include "../pool/sqlconnRAll.h"
+#include "../blog/blogmanager.h"
 
 
 class HttpRequest
@@ -55,8 +56,11 @@ public:
     std::string version() const;
     std::string GetPost(const std::string& key) const;
     std::string GetPost(const char* key) const;
+    std::unordered_map<std::string, std::string> GetPost() const;
+    std::unordered_map<std::string, std::string> GetHeader() const;
 
     bool IsKeepAlive() const;
+    bool IsDynamic() const { return isDynamic_; }  
 
 
 
@@ -68,6 +72,7 @@ private:
     void ParsePath_();
     void ParsePost_();
     void ParseFromUrlencoded_();
+    void parseQueryString(const std::string& query);
 
     static bool UserVerify(const std::string& name, const std::string& pwd, bool isLogin);
 
@@ -79,6 +84,10 @@ private:
     static const std::unordered_set<std::string> DEFAULT_HTML;
     static const std::unordered_map<std::string, int> DEFAULT_HTML_TAG;
     static int ConverHex(char ch);
+    bool isDynamic_ = false;  
+
+    void ParseJson_();  // 添加 JSON 解析函数声明
+    void ParseMultipartFormData_(const std::string& body);
 
 };
 
