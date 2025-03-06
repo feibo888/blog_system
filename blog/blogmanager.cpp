@@ -107,7 +107,7 @@ Blog BlogManager::GetBlogById(int id) {
     // 明确指定需要的列，而不是使用 *
     snprintf(query, sizeof(query),
         "SELECT b.id, b.title, b.content, b.author, b.views, b.likes_count, "
-        "b.comments_count, b.created_at, "
+        "b.comments_count, b.created_at, b.content_type, "
         "(SELECT COUNT(*) FROM likes l WHERE l.blog_id = b.id) as real_likes_count "
         "FROM blogs b "
         "WHERE b.id = %d",
@@ -115,12 +115,14 @@ Blog BlogManager::GetBlogById(int id) {
 
     if (mysql_query(sql, query)) {
         LOG_ERROR("Query blog failed: %s", mysql_error(sql));
+        std::cout << "Query blog failed: " << mysql_error(sql) << std::endl;
         return blog;
     }
 
     MYSQL_RES* res = mysql_store_result(sql);
     if (!res) {
         LOG_ERROR("No result: %s", mysql_error(sql));
+        std::cout << "No result: " << mysql_error(sql) << std::endl;
         return blog;
     }
 
@@ -131,9 +133,10 @@ Blog BlogManager::GetBlogById(int id) {
         blog.content = row[2] ? row[2] : "";
         blog.author = row[3] ? row[3] : "";
         blog.views = row[4] ? atoi(row[4]) : 0;
-        blog.likes_count = row[8] ? atoi(row[8]) : 0;  // 使用实时计算的点赞数
+        blog.likes_count = row[9] ? atoi(row[9]) : 0;  // 使用实时计算的点赞数
         blog.comments_count = row[6] ? atoi(row[6]) : 0;
         blog.created_at = row[7] ? row[7] : "";
+        blog.content_type = row[8] ? row[8] : "";
 
         // 添加调试日志
         LOG_DEBUG("Blog %d likes count: %d", blog.id, blog.likes_count);
@@ -679,70 +682,80 @@ bool BlogManager::ToggleCommentLike(int comment_id, const std::string& username)
     return true;
 }
 
-bool BlogManager::ToggleBlogLike(int blog_id, const std::string& username) {
+bool BlogManager::ToggleBlogLike(int blog_id, const std::string& username, bool& is_liked_out, int& likes_count_out) {
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
     if (!sql) {
-        LOG_ERROR("Failed to get MySQL connection for ToggleBlogLike");
+        LOG_ERROR("Failed to get MySQL connection");
         return false;
     }
-
-    char escaped_username[128];
+    
+    // 转义用户名
+    char escaped_username[256];
     mysql_real_escape_string(sql, escaped_username, username.c_str(), username.length());
-
-    // 开始事务
-    if (mysql_query(sql, "START TRANSACTION")) {
-        LOG_ERROR("Start transaction failed: %s", mysql_error(sql));
-        return false;
-    }
-
+    
     // 检查是否已经点赞
     char query[512];
     snprintf(query, sizeof(query),
         "SELECT 1 FROM likes WHERE user_id = '%s' AND blog_id = %d",
         escaped_username, blog_id);
-
+    
     if (mysql_query(sql, query)) {
-        LOG_ERROR("Check blog like status failed: %s", mysql_error(sql));
-        mysql_query(sql, "ROLLBACK");
+        LOG_ERROR("Check like status failed: %s", mysql_error(sql));
         return false;
     }
-
+    
     MYSQL_RES* res = mysql_store_result(sql);
     if (!res) {
-        LOG_ERROR("No result: %s", mysql_error(sql));
-        mysql_query(sql, "ROLLBACK");
+        LOG_ERROR("Store result failed: %s", mysql_error(sql));
         return false;
     }
-
+    
     bool already_liked = mysql_num_rows(res) > 0;
     mysql_free_result(res);
-
+    
+    // 根据是否已点赞，执行添加或删除
     if (already_liked) {
         // 取消点赞
         snprintf(query, sizeof(query),
             "DELETE FROM likes WHERE user_id = '%s' AND blog_id = %d",
             escaped_username, blog_id);
+        is_liked_out = false;
     } else {
         // 添加点赞
         snprintf(query, sizeof(query),
-            "INSERT INTO likes (user_id, blog_id) VALUES ('%s', %d)",
+            "INSERT INTO likes(user_id, blog_id) VALUES('%s', %d)",
             escaped_username, blog_id);
+        is_liked_out = true;
     }
-
+    
     if (mysql_query(sql, query)) {
-        LOG_ERROR("Toggle blog like failed: %s", mysql_error(sql));
-        mysql_query(sql, "ROLLBACK");
+        LOG_ERROR("Toggle like failed: %s", mysql_error(sql));
         return false;
     }
-
-    // 提交事务
-    if (mysql_query(sql, "COMMIT")) {
-        LOG_ERROR("Commit transaction failed: %s", mysql_error(sql));
-        mysql_query(sql, "ROLLBACK");
+    
+    // 获取最新点赞数
+    snprintf(query, sizeof(query),
+        "SELECT COUNT(*) FROM likes WHERE blog_id = %d",
+        blog_id);
+    
+    if (mysql_query(sql, query)) {
+        LOG_ERROR("Get likes count failed: %s", mysql_error(sql));
         return false;
     }
-
+    
+    MYSQL_RES* count_res = mysql_store_result(sql);
+    if (!count_res) {
+        LOG_ERROR("Store result failed: %s", mysql_error(sql));
+        return false;
+    }
+    
+    MYSQL_ROW row = mysql_fetch_row(count_res);
+    if (row) {
+        likes_count_out = row[0] ? atoi(row[0]) : 0;
+    }
+    mysql_free_result(count_res);
+    
     return true;
 }
 
@@ -921,18 +934,42 @@ bool BlogManager::CreateBlogWithFile(
         return false;
     }
 
-    // 准备SQL语句
-    char query[4096] = {0};
-    snprintf(query, 4096,
-        "INSERT INTO blogs (title, content, content_type, original_filename, author) "
-        "VALUES ('%s', '%s', '%s', '%s', '%s')",
-        title.c_str(), content.c_str(), content_type.c_str(), 
-        filename.c_str(), author.c_str()
-    );
-
-    LOG_DEBUG("CreateBlogWithFile SQL: %s", query);
+    // 转义所有输入，防止SQL注入
+    char* escaped_title = new char[title.length() * 2 + 1];
+    char* escaped_author = new char[author.length() * 2 + 1];
+    char* escaped_filename = new char[filename.length() * 2 + 1];
+    char* escaped_content_type = new char[content_type.length() * 2 + 1];
+    char* escaped_content = new char[content.length() * 2 + 1];
     
-    if (mysql_query(sql, query)) {
+    mysql_real_escape_string(sql, escaped_title, title.c_str(), title.length());
+    mysql_real_escape_string(sql, escaped_author, author.c_str(), author.length());
+    mysql_real_escape_string(sql, escaped_filename, filename.c_str(), filename.length());
+    mysql_real_escape_string(sql, escaped_content_type, content_type.c_str(), content_type.length());
+    mysql_real_escape_string(sql, escaped_content, content.c_str(), content.length());
+
+    // 使用 string 而非固定大小缓冲区
+    std::string query = "INSERT INTO blogs (title, content, content_type, original_filename, author) VALUES ('";
+    query += escaped_title;
+    query += "', '";
+    query += escaped_content;
+    query += "', '";
+    query += escaped_content_type;
+    query += "', '";
+    query += escaped_filename;
+    query += "', '";
+    query += escaped_author;
+    query += "')";
+    
+    bool success = (mysql_query(sql, query.c_str()) == 0);
+    
+    // 释放分配的内存
+    delete[] escaped_title;
+    delete[] escaped_author;
+    delete[] escaped_filename;
+    delete[] escaped_content_type;
+    delete[] escaped_content;
+    
+    if (!success) {
         LOG_ERROR("Create blog failed: %s", mysql_error(sql));
         return false;
     }

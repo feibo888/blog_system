@@ -26,7 +26,8 @@ class HttpRequest
 public:
     enum PARSE_STATE
     {
-        REQUEST_LINE,
+        INIT = -1,
+        REQUEST_LINE = 0,
         HEADERS,
         BODY,
         FINISH,
@@ -46,6 +47,9 @@ public:
 
     HttpRequest(){ Init();}
     ~HttpRequest() = default;
+    PARSE_STATE state() const {
+        return state_;
+    }
 
     void Init();
     bool parse(Buffer& buff);

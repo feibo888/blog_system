@@ -78,7 +78,7 @@ public:
     static bool ToggleCommentLike(int comment_id, const std::string& username);
 
     // 文章点赞相关
-    static bool ToggleBlogLike(int blog_id, const std::string& username);
+    static bool ToggleBlogLike(int blog_id, const std::string& username, bool& is_liked_out, int& likes_count_out);
     static bool HasUserLikedBlog(int blog_id, const std::string& username);
     static int GetBlogLikesCount(int blog_id);
 

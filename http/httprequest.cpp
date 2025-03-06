@@ -32,6 +32,7 @@ void HttpRequest::Init()
 bool HttpRequest::parse(Buffer& buff)
 {
     LOG_DEBUG("Starting parse");
+
     const char CRLF[] = "\r\n";
     if (buff.ReadableBytes() <= 0)
     {
@@ -39,41 +40,101 @@ bool HttpRequest::parse(Buffer& buff)
     }
     while (buff.ReadableBytes() && state_ != FINISH)
     {
-        //Peek: BeginPtr_() + readPos_;
-        //buff: BeginPtr_() + writePos_;
-        const char* lineEnd = search(buff.Peek(), buff.BeginWriteConst(), CRLF, CRLF + 2);
-        string line(buff.Peek(), lineEnd);      //去除了\r\n的一行
+        switch (state_) {
+            // 处理请求行（按行解析）
+            case REQUEST_LINE: {
+                const char* lineEnd = std::search(buff.Peek(), buff.BeginWriteConst(), CRLF, CRLF + 2);
+                std::string line(buff.Peek(), lineEnd);
+                if (!ParseRequestLine_(line)) {
+                    LOG_ERROR("RequestLine parse error");
+                    return false;
+                }
+                ParsePath_();
+                buff.RetrieveUntil(lineEnd + 2);  // 移动读指针
+                state_ = HEADERS;  // 进入头部解析
+                break;
+            }
 
-        switch (state_)
-        {
-        case REQUEST_LINE:      //请求行
-            if (!ParseRequestLine_(line))
-            {
-                return false;
+            // 处理头部（按行解析，直到空行触发BODY状态）
+            case HEADERS: {
+                const char* lineEnd = std::search(buff.Peek(), buff.BeginWriteConst(), CRLF, CRLF + 2);
+                std::string line(buff.Peek(), lineEnd);
+
+                // 检查是否是空行（表示头部结束）
+                bool isEmptyLine = (line.empty());
+
+                ParseHeader_(line);  // 该函数会在空行时将state_设为BODY
+
+
+                if (isEmptyLine) {
+                    // 对于POST请求的特殊处理
+                    if (method_ == "POST") {
+                        // 无Content-Length或Content-Length为0的POST请求
+                        if (header_.count("Content-Length") == 0 || header_["Content-Length"] == "0") {
+                            LOG_DEBUG("POST request with empty body");
+                            ParseBody_("");  // 处理空请求体
+                            state_ = FINISH; // 直接设为完成状态
+                        }
+                        // 其他情况会自动进入BODY状态
+                    } else {
+                        // 非POST请求在遇到空行后直接完成
+                        state_ = FINISH;
+                    }
+                }
+
+                // if ((buff.ReadableBytes() <= 2 && method_ != "POST") || (header_.count("Content-Length") == 1 && header_["Content-Length"] == "0")) 
+                // {
+                //     state_ = FINISH;
+                // }
+                buff.RetrieveUntil(lineEnd + 2);
+                break;
             }
-            ParsePath_();
-            break;
-        case HEADERS:           //请求头
-            ParseHeader_(line);
-            if (buff.ReadableBytes() <= 2)
-            {
-                state_ = FINISH;
+
+            // 处理请求体（一次性读取所有内容）
+            case BODY: {
+
+                if(method_ == "POST")
+                {
+                    auto it = header_.find("Content-Length");
+                    if (it == header_.end()) {
+                        
+                        LOG_ERROR("No Content-Length in headers");
+                        state_ = FINISH;
+                        return false;
+                    }
+                    int content_length_;
+                    // 解析Content-Length值
+                    try {
+                        content_length_ = std::stoi(it->second);                    
+                    } catch (...) {
+                        LOG_ERROR("Invalid Content-Length: %s", it->second.c_str());
+                        state_ = FINISH;
+                        return false;
+                    }
+
+                    // 检查缓冲区数据是否足够
+                    if (buff.ReadableBytes() < static_cast<size_t>(content_length_)) {
+                        return false;  // 数据不足，等待下次读取
+                    }
+
+                    // 一次性读取Body内容
+                    std::string body(buff.Peek(), buff.Peek() + content_length_);
+                    ParseBody_(body);
+                    buff.Retrieve(content_length_);
+                    state_ = FINISH;  // 标记解析完成
+                    break;
+                }
+                else
+                {
+                    state_ = FINISH;
+                    break;
+                }
             }
-            break;
-        case BODY:              //请求数据
-            ParseBody_(line);
-            break;
-        default:
-            break;
+            case FINISH:
+                break;  // 无需操作
         }
-        if (lineEnd == buff.BeginWriteConst())
-        {
-            buff.RetrieveUntil(lineEnd);        //更新readPos_，否则会再次读取一个空行
-            state_ = FINISH;
-            break;
-        }
-        buff.RetrieveUntil(lineEnd + 2);        //更新readPos_的位置到下一行，否则readPos_一直不会变，导致readBuf过大
     }
+
     LOG_DEBUG("[%s], [%s], [%s]", method_.c_str(), path_.c_str(), version_.c_str());
     return true;
 
@@ -136,15 +197,6 @@ bool HttpRequest::IsKeepAlive() const
         return header_.find("Connection")->second == "keep-alive" && version_ == "1.1";
     }
     return false;
-
-
-    // auto it = header_.find("connection");
-    // if (it != header_.end()) {
-    //     std::string value = it->second;
-    //     std::transform(value.begin(), value.end(), value.begin(), ::tolower);  // 转小写
-    //     return value == "keep-alive" && version_ == "1.1";
-    // }
-    // return false;
 }
 
 bool HttpRequest::ParseRequestLine_(const std::string& line)
@@ -157,22 +209,9 @@ bool HttpRequest::ParseRequestLine_(const std::string& line)
     {
         method_ = subMatch[1];
         path_ = subMatch[2];
-        //string fullPath = subMatch[2];
         version_ = subMatch[3];
         state_ = HEADERS;
 
-        // 解析完整的路径和查询参数
-        // size_t queryPos = fullPath.find('?');
-        // if (queryPos != string::npos) 
-        // {
-        //     path_ = fullPath.substr(0, queryPos); // 提取路径部分
-        //     string query = fullPath.substr(queryPos + 1); // 提取查询参数
-        //     parseQueryString(query); // 解析查询参数到 post_ 映射
-        // } 
-        // else 
-        // {
-        //     path_ = fullPath;
-        // }
         LOG_DEBUG("%s, %s, %s", method_.c_str(), path_.c_str(), version_.c_str());
         return true;
     }
@@ -235,7 +274,7 @@ void HttpRequest::ParseBody_(const std::string& line)
         ParseMultipartFormData_(line);
     }
     else if (header_["Content-Type"].find("application/x-www-form-urlencoded") != std::string::npos) {
-        ParseFromUrlencoded_();
+        ParsePost_();
     }
     else if (header_["Content-Type"].find("application/json") != std::string::npos) {
         ParseJson_();
@@ -243,6 +282,8 @@ void HttpRequest::ParseBody_(const std::string& line)
     
     state_ = FINISH;
     LOG_DEBUG("Body:%s, len:%d", line.c_str(), line.size());
+
+    
 }
 
 void HttpRequest::ParsePath_()
@@ -299,41 +340,6 @@ void HttpRequest::ParsePath_()
 void HttpRequest::ParsePost_()
 {
 
-    // if (method_ == "POST" && header_["Content-Type"] == "application/x-www-form-urlencoded")
-    // {
-    //     ParseFromUrlencoded_();
-
-    //     if (DEFAULT_HTML_TAG.count(path_))
-    //     {
-    //         int tag = DEFAULT_HTML_TAG.find(path_)->second;
-    //         LOG_DEBUG("Tag:%d", tag);
-    //         if (tag == 0 || tag == 1)
-    //         {
-    //             bool isLogin = (tag == 1);
-    //             if (UserVerify(post_["username"], post_["password"], isLogin))
-    //             {
-    //                 path_ = "/user_dashboard.html";
-    //             }
-    //             else
-    //             {
-    //                 path_ = "/index.html";
-    //             }
-    //         }
-    //     }
-    //     else if (path_ == "/api/posts") 
-    //     {
-    //         // 创建文章
-    //         if (BlogManager::CreateBlog(post_["title"], post_["content"], "admin")) 
-    //         {  
-    //             path_ = "/api/posts";  // 重定向到列表（实际由响应处理）
-    //         } 
-    //         else
-    //         {
-    //             path_ = "/error.html";  // 错误页面（后续改为 JSON 错误）
-    //         }
-    //     }
-    // }
-
     if (method_ == "POST" && header_["Content-Type"] == "application/x-www-form-urlencoded") 
     {
         ParseFromUrlencoded_();
@@ -372,6 +378,10 @@ void HttpRequest::ParsePost_()
             }
             isDynamic_ = true; // 标记为动态请求
         } 
+        else if(path_.rfind("/likes/", 0) == 0 && method_ == "POST")
+        {
+            isDynamic_ = true; // 标记为动态请求
+        }
         else if (path_.rfind("/user/", 0) == 0 && method_ == "PUT") 
         {
             string username = path_.substr(10); // 提取 username
@@ -626,4 +636,5 @@ void HttpRequest::ParseMultipartFormData_(const std::string& body) {
             post_[name] = content;
         }
     }
+
 }

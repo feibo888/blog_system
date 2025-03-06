@@ -476,24 +476,36 @@ function toggleCommentLike(commentId) {
     .catch(error => console.error('评论点赞失败:', error));
 }
 
-// 点赞/取消点赞文章
-function toggleLike(postId) {
-    if (!checkLoginStatus()) {
-        alert('请先登录！');
-        return;
-    }
-
-    const token = localStorage.getItem('token');
-    fetch(`/likes/${postId}`, { 
+// 在script.js中修改点赞函数，增加超时处理
+function toggleLike(id) {
+    // 显示加载指示器
+    const likeBtn = document.getElementById('like-btn');
+    const originalText = likeBtn.textContent;
+    likeBtn.textContent = '处理中...';
+    likeBtn.disabled = true;
+    
+    // 设置超时
+    const timeout = setTimeout(() => {
+        likeBtn.textContent = originalText;
+        likeBtn.disabled = false;
+        alert('点赞操作超时，请稍后再试');
+    }, 5000); // 5秒超时
+    
+    fetch(`/likes/${id}`, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${token}`
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Length': '0',  // 明确指定内容长度为0
+            'Content-Type': 'application/x-www-form-urlencoded'  // 指定内容类型
         }
     })
     .then(response => response.json())
     .then(data => {
+        clearTimeout(timeout); // 取消超时
+        likeBtn.disabled = false;
+        
         if (data.success) {
-            const likeBtn = document.getElementById('like-btn');
+            document.querySelector('.likes-count').textContent = data.likes_count;
             if (data.liked) {
                 likeBtn.classList.add('liked');
                 likeBtn.textContent = '取消点赞';
@@ -501,15 +513,17 @@ function toggleLike(postId) {
                 likeBtn.classList.remove('liked');
                 likeBtn.textContent = '点赞';
             }
-            // 更新点赞数
-            if (data.likes_count !== undefined) {
-                document.querySelector('.likes-count').textContent = data.likes_count;
-            }
         } else {
-            alert(data.message);
+            likeBtn.textContent = originalText;
+            alert('操作失败: ' + data.message);
         }
     })
-    .catch(error => console.error('点赞失败:', error));
+    .catch(error => {
+        clearTimeout(timeout); // 取消超时
+        likeBtn.textContent = originalText;
+        likeBtn.disabled = false;
+        console.error('Error:', error);
+    });
 }
 
 // 注册用户
@@ -607,3 +621,48 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// 处理 Markdown 文件上传
+function handleMarkdownUpload(event) {
+    event.preventDefault();
+    
+    if (!checkLoginStatus()) {
+        alert('请先登录！');
+        return;
+    }
+
+    const title = document.getElementById('title').value.trim();
+    const file = document.getElementById('markdown-file').files[0];
+    
+    if (!title || !file) {
+        alert('请填写标题并选择文件！');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('file', file);
+    formData.append('content_type', 'markdown');
+
+    const token = localStorage.getItem('token');
+    fetch('/blogs/upload', {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('文章上传成功！');
+            window.location.href = 'index.html';
+        } else {
+            alert(data.message || '上传失败');
+        }
+    })
+    .catch(error => {
+        console.error('上传失败:', error);
+        alert('上传失败，请稍后重试');
+    });
+}

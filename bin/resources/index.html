@@ -33,6 +33,7 @@
                     <button id="login-btn" class="btn">登录</button>
                 </div>
                 <button id="create-post-btn" class="btn">撰写文章</button>
+                <button id="upload-markdown-btn" class="btn">上传 Markdown</button>
                 <div class="user-profile" id="user-profile" style="display: none;">
                     <a href="dashboard.html" class="user-info-clickable">
                         <span id="username-display">用户</span>
@@ -91,6 +92,11 @@
             document.querySelector('.user-info-clickable').addEventListener('click', (e) => {
                 e.preventDefault();
                 window.location.replace('dashboard.html');
+            });
+
+            // 添加上传 Markdown 按钮事件
+            document.getElementById('upload-markdown-btn').addEventListener('click', () => {
+                window.location.href = 'upload_markdown.html';
             });
 
             // 初始化导航栏状态

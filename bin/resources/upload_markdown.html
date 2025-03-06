@@ -43,13 +43,14 @@
         </div>
     </header>
     <main>
-        <div class="upload-container">
+        <div class="form-container">
+            <h2>上传 Markdown 文件</h2>
             <form id="upload-form">
                 <div class="form-group">
                     <label for="title">文章标题</label>
                     <input type="text" id="title" name="title" required>
                 </div>
-                <div class="file-input-container">
+                <div class="form-group">
                     <label for="markdown-file">选择 Markdown 文件</label>
                     <input type="file" id="markdown-file" accept=".md,.markdown" required>
                 </div>
@@ -61,7 +62,11 @@
             </form>
         </div>
     </main>
+    <script src="script.js"></script>
     <script>
+        document.getElementById('upload-form').addEventListener('submit', handleMarkdownUpload);
+        
+        // 文件预览功能
         document.getElementById('markdown-file').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -73,45 +78,6 @@
                 document.getElementById('preview').style.display = 'block';
             };
             reader.readAsText(file);
-        });
-
-        document.getElementById('upload-form').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const title = document.getElementById('title').value;
-            const file = document.getElementById('markdown-file').files[0];
-            
-            if (!title || !file) {
-                alert('请填写标题并选择文件！');
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('title', title);
-            formData.append('file', file);
-            formData.append('content_type', 'markdown');
-
-            const token = localStorage.getItem('token');
-            fetch('/blogs/upload', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('文章上传成功！');
-                    window.location.href = 'index.html';
-                } else {
-                    alert(data.message || '上传失败');
-                }
-            })
-            .catch(error => {
-                console.error('上传失败:', error);
-                alert('上传失败，请稍后重试');
-            });
         });
     </script>
 </body>

@@ -67,6 +67,7 @@ private:
     bool isDynamic_;
 
     std::string generateToken(const std::string& username);
+    std::string EscapeJsonString(const std::string& input);
 };
 
 

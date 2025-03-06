@@ -269,9 +269,9 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
         json << "[";
         for (size_t i = 0; i < blogs.size(); ++i) {
             json << "{\"id\":" << blogs[i].id 
-                 << ",\"title\":\"" << blogs[i].title 
-                 << "\",\"author\":\"" << blogs[i].author 
-                 << "\",\"created_at\":\"" << blogs[i].created_at 
+                 << ",\"title\":\"" << EscapeJsonString(blogs[i].title) 
+                 << "\",\"author\":\"" << EscapeJsonString(blogs[i].author) 
+                 << "\",\"created_at\":\"" << EscapeJsonString(blogs[i].created_at) 
                  << "\",\"views\":" << blogs[i].views
                  << ",\"likes_count\":" << blogs[i].likes_count
                  << ",\"comments_count\":" << blogs[i].comments_count
@@ -294,13 +294,14 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
         
         json << "{"
              << "\"id\":" << blog.id << ","
-             << "\"title\":\"" << blog.title << "\","
-             << "\"content\":\"" << blog.content << "\","
-             << "\"author\":\"" << blog.author << "\","
-             << "\"created_at\":\"" << blog.created_at << "\","
+             << "\"title\":\"" << EscapeJsonString(blog.title) << "\","
+             << "\"content\":\"" << EscapeJsonString(blog.content) << "\","
+             << "\"author\":\"" << EscapeJsonString(blog.author) << "\","
+             << "\"created_at\":\"" << EscapeJsonString(blog.created_at) << "\","
              << "\"views\":" << blog.views << ","
              << "\"likes_count\":" << blog.likes_count << ","
              << "\"comments_count\":" << blog.comments_count << ","
+             << "\"content_type\":\"" << EscapeJsonString(blog.content_type) << "\","
              << "\"is_liked\":" << (is_liked ? "true" : "false")
              << "}";
     }
@@ -312,8 +313,8 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
         json << "[";
         for (size_t i = 0; i < posts.size(); ++i) {
             json << "{\"id\":" << posts[i].id 
-                 << ",\"title\":\"" << posts[i].title 
-                 << "\",\"created_at\":\"" << posts[i].created_at 
+                 << ",\"title\":\"" << EscapeJsonString(posts[i].title) 
+                 << "\",\"created_at\":\"" << EscapeJsonString(posts[i].created_at) 
                  << "\",\"views\":" << posts[i].views
                  << ",\"likes_count\":" << posts[i].likes_count
                  << ",\"comments_count\":" << posts[i].comments_count
@@ -332,11 +333,11 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
             json << "{\"error\":\"User not found\"}";
         } else {
             json << "{"
-                 << "\"username\":\"" << user.username << "\","
-                 << "\"nickname\":\"" << user.nickname << "\","
-                 << "\"email\":\"" << user.email << "\","
-                 << "\"avatar_url\":\"" << user.avatar_url << "\","
-                 << "\"bio\":\"" << user.bio << "\","
+                 << "\"username\":\"" << EscapeJsonString(user.username) << "\","
+                 << "\"nickname\":\"" << EscapeJsonString(user.nickname) << "\","
+                 << "\"email\":\"" << EscapeJsonString(user.email) << "\","
+                 << "\"avatar_url\":\"" << EscapeJsonString(user.avatar_url) << "\","
+                 << "\"bio\":\"" << EscapeJsonString(user.bio) << "\","
                  << "\"posts_count\":" << user.posts_count << ","
                  << "\"likes_received\":" << user.likes_received << ","
                  << "\"followers_count\":" << user.followers_count << ","
@@ -370,9 +371,9 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
         json << "[";
         for (size_t i = 0; i < likes.size(); ++i) {
             json << "{\"id\":" << likes[i].id 
-                 << ",\"title\":\"" << likes[i].title 
-                 << "\",\"author\":\"" << likes[i].author
-                 << "\",\"created_at\":\"" << likes[i].created_at 
+                 << ",\"title\":\"" << EscapeJsonString(likes[i].title) 
+                 << "\",\"author\":\"" << EscapeJsonString(likes[i].author)
+                 << "\",\"created_at\":\"" << EscapeJsonString(likes[i].created_at) 
                  << "\"}";
             if (i < likes.size() - 1) json << ",";
         }
@@ -386,9 +387,9 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
         json << "[";
         for (size_t i = 0; i < favorites.size(); ++i) {
             json << "{\"id\":" << favorites[i].id 
-                 << ",\"title\":\"" << favorites[i].title 
-                 << "\",\"author\":\"" << favorites[i].author
-                 << "\",\"created_at\":\"" << favorites[i].created_at 
+                 << ",\"title\":\"" << EscapeJsonString(favorites[i].title) 
+                 << "\",\"author\":\"" << EscapeJsonString(favorites[i].author)
+                 << "\",\"created_at\":\"" << EscapeJsonString(favorites[i].created_at) 
                  << "\"}";
             if (i < favorites.size() - 1) json << ",";
         }
@@ -402,9 +403,9 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
         json << "[";
         for (size_t i = 0; i < notifications.size(); ++i) {
             json << "{\"id\":" << notifications[i].id 
-                 << ",\"content\":\"" << notifications[i].content 
+                 << ",\"content\":\"" << EscapeJsonString(notifications[i].content) 
                  << "\",\"is_read\":" << (notifications[i].is_read ? "true" : "false")
-                 << ",\"created_at\":\"" << notifications[i].created_at 
+                 << ",\"created_at\":\"" << EscapeJsonString(notifications[i].created_at) 
                  << "\"}";
             if (i < notifications.size() - 1) json << ",";
         }
@@ -443,11 +444,11 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
             json << "{"
                  << "\"id\":" << comments[i].id << ","
                  << "\"blog_id\":" << comments[i].blog_id << ","
-                 << "\"user_id\":\"" << comments[i].user_id << "\","
-                 << "\"content\":\"" << comments[i].content << "\","
+                 << "\"user_id\":\"" << EscapeJsonString(comments[i].user_id) << "\","
+                 << "\"content\":\"" << EscapeJsonString(comments[i].content) << "\","
                  << "\"parent_id\":" << (comments[i].parent_id != -1 ? std::to_string(comments[i].parent_id) : "null") << ","
                  << "\"likes_count\":" << comments[i].likes_count << ","
-                 << "\"created_at\":\"" << comments[i].created_at << "\""
+                 << "\"created_at\":\"" << EscapeJsonString(comments[i].created_at) << "\""
                  << "}";
             if (i < comments.size() - 1) json << ",";
         }
@@ -527,10 +528,12 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
             code_ = 401;
             json << "{\"success\":false,\"message\":\"Unauthorized\"}";
         } else {
-            bool success = BlogManager::ToggleBlogLike(blog_id, username);
+            bool is_liked;
+            int likes_count;
+            bool success = BlogManager::ToggleBlogLike(blog_id, username, is_liked, likes_count);
             if (success) {
-                bool is_liked = BlogManager::HasUserLikedBlog(blog_id, username);
-                int likes_count = BlogManager::GetBlogLikesCount(blog_id);
+                // is_liked = BlogManager::HasUserLikedBlog(blog_id, username);
+                // likes_count = BlogManager::GetBlogLikesCount(blog_id);
                 json << "{\"success\":true,"
                      << "\"liked\":" << (is_liked ? "true" : "false") << ","
                      << "\"likes_count\":" << likes_count << "}";
@@ -555,10 +558,10 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
         
         json << "{"
              << "\"id\":" << blog.id << ","
-             << "\"title\":\"" << blog.title << "\","
-             << "\"content\":\"" << blog.content << "\","
-             << "\"author\":\"" << blog.author << "\","
-             << "\"created_at\":\"" << blog.created_at << "\","
+             << "\"title\":\"" << EscapeJsonString(blog.title) << "\","
+             << "\"content\":\"" << EscapeJsonString(blog.content) << "\","
+             << "\"author\":\"" << EscapeJsonString(blog.author) << "\","
+             << "\"created_at\":\"" << EscapeJsonString(blog.created_at) << "\","
              << "\"views\":" << blog.views << ","
              << "\"likes_count\":" << blog.likes_count << ","
              << "\"comments_count\":" << blog.comments_count << ","
@@ -707,3 +710,28 @@ std::string HttpResponse::getUsernameFromToken()
     }
     return username;
 }
+
+
+// 添加这个JSON字符串转义函数
+std::string HttpResponse::EscapeJsonString(const std::string& input) {
+    std::ostringstream escaped;
+    for (auto c = input.begin(); c != input.end(); ++c) {
+        switch (*c) {
+            case '"': escaped << "\\\""; break;
+            case '\\': escaped << "\\\\"; break;
+            case '\b': escaped << "\\b"; break;
+            case '\f': escaped << "\\f"; break;
+            case '\n': escaped << "\\n"; break;
+            case '\r': escaped << "\\r"; break;
+            case '\t': escaped << "\\t"; break;
+            default:
+                if (static_cast<unsigned char>(*c) < 32) {
+                    escaped << "\\u" << std::hex << std::setw(4) << std::setfill('0') << static_cast<int>(*c);
+                } else {
+                    escaped << *c;
+                }
+        }
+    }
+    return escaped.str();
+}
+

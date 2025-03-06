@@ -120,37 +120,81 @@ sockaddr_in HttpConn::GetAddr() const
 bool HttpConn::process()
 {
     LOG_DEBUG("starting http conn process");
-    request_.Init();
+
+    // 只有在没有开始解析请求或上一个请求已完成时才初始化
+    if (request_.state() == HttpRequest::FINISH || request_.state() == HttpRequest::INIT)
+    {
+        request_.Init();
+    }
+    
     if (readBuf_.ReadableBytes() <= 0)
     {
         return false;
     }
-    else if (request_.parse(readBuf_))      //解析请求报文
+
+
+    bool parseResult = request_.parse(readBuf_);
+    
+    // 如果解析成功或发生真正的错误(而不是简单的数据不足)
+    if (request_.state() == HttpRequest::FINISH)
     {
         LOG_DEBUG("%s", request_.path().c_str());
-        response_.Init(srcDir, request_.path(), request_.method(), request_.GetPost(), request_.GetHeader(), request_.IsKeepAlive(), 200, request_.IsDynamic());
+        if (parseResult) {
+            response_.Init(srcDir, request_.path(), request_.method(), request_.GetPost(), request_.GetHeader(), request_.IsKeepAlive(), 200, request_.IsDynamic());
+        } else {
+            response_.Init(srcDir, request_.path(), request_.method(), request_.GetPost(), request_.GetHeader(), false, 400, request_.IsDynamic());
+        }
+        
+        // 生成响应...
+        response_.MakeResponse(writeBuf_);
+        
+        // 设置响应头和文件...
+        iov_[0].iov_base = const_cast<char*>(writeBuf_.Peek());
+        iov_[0].iov_len = writeBuf_.ReadableBytes();
+        iovCnt_ = 1;
+        
+        if (response_.FileLen() > 0 && response_.File())
+        {
+            iov_[1].iov_base = response_.File();
+            iov_[1].iov_len = response_.FileLen();
+            iovCnt_ = 2;
+        }
+        
+        LOG_DEBUG("filesize:%d, %d to %d", response_.FileLen(), iovCnt_, ToWriteBytes());
+        return true;
     }
-    else
-    {
-        response_.Init(srcDir, request_.path(), request_.method(), request_.GetPost(), request_.GetHeader(), false, 400, request_.IsDynamic());
-    }
 
-    //生成响应报文
-    response_.MakeResponse(writeBuf_);
+    // 解析未完成，需要更多数据
+    return false;
 
-    //响应头
-    iov_[0].iov_base = const_cast<char*>(writeBuf_.Peek());
-    iov_[0].iov_len = writeBuf_.ReadableBytes();
-    iovCnt_ = 1;
+    // else if (request_.parse(readBuf_))      //解析请求报文
+    // {
+    //     LOG_DEBUG("%s", request_.path().c_str());
+    //     response_.Init(srcDir, request_.path(), request_.method(), request_.GetPost(), request_.GetHeader(), request_.IsKeepAlive(), 200, request_.IsDynamic());
+    // }
+    // else
+    // {
+    //     response_.Init(srcDir, request_.path(), request_.method(), request_.GetPost(), request_.GetHeader(), false, 400, request_.IsDynamic());
+    // }
 
-    //文件
-    if (response_.FileLen() > 0 && response_.File())
-    {
-        iov_[1].iov_base = response_.File();
-        iov_[1].iov_len = response_.FileLen();
-        iovCnt_ = 2;
-    }
+    // //生成响应报文
+    // response_.MakeResponse(writeBuf_);
 
-    LOG_DEBUG("filesize:%d, %d  to %d", response_.FileLen() , iovCnt_, ToWriteBytes());
-    return true;
+    // //响应头
+    // iov_[0].iov_base = const_cast<char*>(writeBuf_.Peek());
+    // iov_[0].iov_len = writeBuf_.ReadableBytes();
+    // iovCnt_ = 1;
+
+    // //文件
+    // if (response_.FileLen() > 0 && response_.File())
+    // {
+    //     iov_[1].iov_base = response_.File();
+    //     iov_[1].iov_len = response_.FileLen();
+    //     iovCnt_ = 2;
+    // }
+
+    // LOG_DEBUG("filesize:%d, %d  to %d", response_.FileLen() , iovCnt_, ToWriteBytes());
+    // return true;
+
+    
 }

@@ -64,6 +64,9 @@ CREATE TABLE likes (
     CHECK (blog_id IS NOT NULL OR comment_id IS NOT NULL)  -- 确保至少有一个不为空
 );
 
+-- 如果还没有这个索引，请添加
+CREATE INDEX idx_likes_blog_id ON likes(blog_id);
+
 -- 标签表
 CREATE TABLE tags (
     id INT AUTO_INCREMENT PRIMARY KEY,
