@@ -6,6 +6,8 @@
     <title>文章详情 - 博客天地</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/highlight.min.js"></script>
     <style>
         .post-detail {
             max-width: 800px;
@@ -131,6 +133,47 @@
             font-size: 0.9rem;
             color: #666;
         }
+
+        .post-content pre {
+            background-color: #f6f8fa;
+            border-radius: 6px;
+            padding: 16px;
+            overflow-x: auto;
+            margin-bottom: 1.5rem;
+        }
+    
+        .post-content code {
+            font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            background-color: rgba(27,31,35,0.05);
+            border-radius: 3px;
+            padding: 0.2em 0.4em;
+        }
+        
+        .post-content pre code {
+            background-color: transparent;
+            padding: 0;
+            display: block;
+            line-height: 1.6;
+        }
+        
+        /* 表格样式 */
+        .post-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 1.5rem;
+        }
+        
+        .post-content th,
+        .post-content td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        
+        .post-content tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
     </style>
 </head>
 <body>
@@ -175,6 +218,16 @@
     </main>
     <script src="script.js"></script>
     <script>
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true,
+            gfm: true          // GitHub Flavored Markdown
+        });
         const id = window.location.hash.substring(1);  // 去掉 # 号
         if (id) {
             // 加载文章内容
@@ -190,13 +243,16 @@
                 console.log('文章数据:', post);  // 添加调试输出
                 console.log('内容类型:', post.content_type, typeof post.content_type);  // 查看content_type的值和类型
                 console.log('文章内容:', post.content);  // 查看内容是否为空
-                
+
                 document.getElementById('post-title').textContent = post.title;
 
                 // 根据内容类型选择不同的渲染方式
                 if (post.content_type === 'markdown') {
                     // 使用 marked.js 渲染 Markdown
                     document.getElementById('post-content').innerHTML = marked.parse(post.content);
+                    document.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
                 } else {
                     // 普通文本内容
                     document.getElementById('post-content').innerHTML = `<p>${post.content}</p>`;
