@@ -35,11 +35,11 @@ RUN sed -i 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.l
 WORKDIR /app
 
 # 复制编译好的可执行文件
-COPY --from=builder /app/bin/my_webServer .
+COPY --from=builder /app/bin/blog_system .
 COPY ./bin/resources /app/resources
 
 # 暴露端口（根据你的项目调整）
 EXPOSE 30001
 
 # 启动服务器
-CMD ["./my_webServer"]
+CMD ["./blog_system"]

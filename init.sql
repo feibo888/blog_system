@@ -1,3 +1,7 @@
+-- 设置字符集
+SET NAMES utf8mb4;
+SET CHARACTER SET utf8mb4;
+
 DROP DATABASE IF EXISTS blog_data;
 CREATE DATABASE blog_data;
 USE blog_data;
