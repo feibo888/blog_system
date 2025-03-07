@@ -26,7 +26,7 @@ CREATE TABLE user (
 CREATE TABLE blogs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(100) NOT NULL,
-    content TEXT NOT NULL,
+    content MEDIUMTEXT NOT NULL,
     content_type ENUM('text', 'markdown') DEFAULT 'text',  -- 区分普通文本和markdown
     original_filename VARCHAR(255),  -- 原始文件名
     author VARCHAR(50) NOT NULL,
