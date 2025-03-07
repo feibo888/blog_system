@@ -727,3 +727,56 @@ nav .btn.active {
     border-radius: 4px;
     background: white;
 }
+
+/* 搜索框样式 */
+.search-container {
+    display: flex;
+    align-items: center;
+    margin: 0 auto;
+    max-width: 400px;
+    width: 100%;
+}
+
+#search-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px 0 0 4px;
+    font-size: 14px;
+}
+
+#search-button {
+    background-color: #1E3A8A;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#search-button:hover {
+    background-color: #1c3178;
+}
+
+/* 搜索结果标题 */
+.search-results-title {
+    text-align: center;
+    color: #1E3A8A;
+    margin: 20px 0;
+    font-size: 1.5rem;
+}
+
+.no-results {
+    text-align: center;
+    color: #666;
+    margin: 40px 0;
+    font-size: 1.1rem;
+}
+
+/* 搜索结果高亮 */
+.highlight {
+    background-color: #ffeb3b;
+    padding: 0 2px;
+    border-radius: 2px;
+}

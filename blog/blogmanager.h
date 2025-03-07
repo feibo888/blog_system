@@ -105,6 +105,8 @@ public:
         const std::string& username,
         const std::unordered_map<std::string, std::string>& profileData
     );
+
+    static std::vector<Blog> SearchBlogs(const std::string& query);
 };
 
 #endif // BLOGMANAGER_H

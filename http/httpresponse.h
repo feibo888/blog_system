@@ -68,6 +68,7 @@ private:
 
     std::string generateToken(const std::string& username);
     std::string EscapeJsonString(const std::string& input);
+    std::string UrlDecode(const std::string& input);
 };
 
 

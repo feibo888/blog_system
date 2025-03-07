@@ -1184,3 +1184,57 @@ bool BlogManager::UpdateUserProfile(
     LOG_INFO("User profile updated: username=%s", username.c_str());
     return true;
 }
+
+std::vector<Blog> BlogManager::SearchBlogs(const std::string& query) {
+    std::vector<Blog> results;
+    MYSQL* sql;
+    SqlConnRAll guard(&sql, SqlConnPool::Instance());
+    if (!sql) {
+        LOG_ERROR("Failed to get MySQL connection for SearchBlogs");
+        return results;
+    }
+    
+    // 转义查询字符串防止SQL注入
+    char escaped_query[1024];
+    mysql_real_escape_string(sql, escaped_query, query.c_str(), query.length());
+    
+    // SQL查询：在标题和内容中搜索
+    char sql_query[2048];
+    snprintf(sql_query, sizeof(sql_query), 
+             "SELECT id, title, content, author, views, likes_count, comments_count, created_at "
+             "FROM blogs "
+             "WHERE title LIKE '%%%s%%' OR content LIKE '%%%s%%' "
+             "ORDER BY created_at DESC", 
+             escaped_query, escaped_query);
+    
+    LOG_DEBUG("Search query: %s", sql_query);
+    
+    if (mysql_query(sql, sql_query)) {
+        LOG_ERROR("Search blogs failed: %s", mysql_error(sql));
+        return results;
+    }
+    
+    MYSQL_RES* res = mysql_store_result(sql);
+    if (!res) {
+        LOG_ERROR("No result: %s", mysql_error(sql));
+        return results;
+    }
+    
+    MYSQL_ROW row;
+    while ((row = mysql_fetch_row(res))) {
+        Blog blog;
+        blog.id = atoi(row[0]);
+        blog.title = row[1] ? row[1] : "";
+        blog.content = row[2] ? row[2] : "";
+        blog.author = row[3] ? row[3] : "";
+        blog.views = row[4] ? atoi(row[4]) : 0;
+        blog.likes_count = row[5] ? atoi(row[5]) : 0;
+        blog.comments_count = row[6] ? atoi(row[6]) : 0;
+        blog.created_at = row[7] ? row[7] : "";
+        results.push_back(blog);
+    }
+    
+    mysql_free_result(res);
+    LOG_INFO("Found %zu results for search query: %s", results.size(), query.c_str());
+    return results;
+}

@@ -666,3 +666,105 @@ function handleMarkdownUpload(event) {
         alert('上传失败，请稍后重试');
     });
 }
+
+
+// 搜索文章功能
+function searchPosts(query) {
+    if (!query.trim()) {
+        loadPosts(); // 如果搜索词为空，加载所有文章
+        return;
+    }
+    
+    fetch(`/blogs/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(posts => {
+            // 清空当前文章列表
+            const list = document.getElementById('post-list');
+            list.innerHTML = '';
+            
+            // 添加搜索结果标题
+            const header = document.createElement('h2');
+            header.className = 'search-results-title';
+            header.textContent = `搜索结果：${query}`;
+            list.appendChild(header);
+            
+            if (posts.length === 0) {
+                const noResults = document.createElement('p');
+                noResults.className = 'no-results';
+                noResults.textContent = '没有找到相关文章';
+                list.appendChild(noResults);
+                return;
+            }
+            
+            // 显示搜索结果
+            posts.forEach(post => {
+                const div = document.createElement('div');
+                div.className = 'post-item';
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'post-title';
+                
+                // 高亮显示搜索词
+                const titleText = post.title || '无标题';
+                titleDiv.textContent = titleText;
+                
+                const metaDiv = document.createElement('div');
+                metaDiv.className = 'post-meta';
+                metaDiv.innerHTML = `
+                    <span class="author">作者：${post.author}</span>
+                    <span class="date">发布于：${formatDate(post.created_at)}</span>
+                `;
+                
+                const statsDiv = document.createElement('div');
+                statsDiv.className = 'post-stats';
+                statsDiv.innerHTML = `
+                    <span><i class="icon-eye"></i>${post.views || 0}</span>
+                    <span><i class="icon-heart"></i>${post.likes_count || 0}</span>
+                    <span><i class="icon-comment"></i>${post.comments_count || 0}</span>
+                `;
+                
+                div.onclick = () => window.location.href = `post.html#${post.id}`;
+                
+                div.appendChild(titleDiv);
+                div.appendChild(metaDiv);
+                div.appendChild(statsDiv);
+                
+                list.appendChild(div);
+            });
+        })
+        .catch(error => {
+            console.error('搜索失败:', error);
+            alert('搜索失败，请稍后重试');
+        });
+}
+
+// 添加事件监听，在index.html加载完成后执行
+document.addEventListener('DOMContentLoaded', function() {
+    // 添加搜索按钮事件监听
+    const searchButton = document.getElementById('search-button');
+    if (searchButton) {
+        searchButton.addEventListener('click', () => {
+            const query = document.getElementById('search-input').value.trim();
+            searchPosts(query);
+        });
+    }
+    
+    // 添加回车搜索功能
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const query = e.target.value.trim();
+                searchPosts(query);
+            }
+        });
+    }
+    
+    // 检查URL是否包含搜索参数
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchQuery = urlParams.get('q');
+    if (searchQuery) {
+        document.getElementById('search-input').value = searchQuery;
+        searchPosts(searchQuery);
+    }
+});

@@ -712,6 +712,33 @@ void HttpResponse::AddDynamicContent_(Buffer& buff)
             }
         }
     }
+    else if (path_.rfind("/blogs/search", 0) == 0 && method_ == "GET") {
+        // 从查询参数中获取搜索词
+        size_t pos = path_.find("?q=");
+        std::string query = "";
+        if (pos != std::string::npos) {
+            query = path_.substr(pos + 3);  // +3 跳过 "?q="
+            // URL解码搜索词
+            query = UrlDecode(query);
+            LOG_INFO("Search query: %s", query.c_str());
+        }
+        
+        std::vector<Blog> searchResults = BlogManager::SearchBlogs(query);
+        
+        json << "[";
+        for (size_t i = 0; i < searchResults.size(); ++i) {
+            json << "{\"id\":" << searchResults[i].id 
+                 << ",\"title\":\"" << EscapeJsonString(searchResults[i].title) 
+                 << "\",\"author\":\"" << EscapeJsonString(searchResults[i].author)
+                 << "\",\"created_at\":\"" << EscapeJsonString(searchResults[i].created_at) 
+                 << "\",\"views\":" << searchResults[i].views
+                 << ",\"likes_count\":" << searchResults[i].likes_count
+                 << ",\"comments_count\":" << searchResults[i].comments_count
+                 << "}";
+            if (i < searchResults.size() - 1) json << ",";
+        }
+        json << "]";
+    }
 
     string body = json.str();
     if (body.empty()) {
@@ -817,3 +844,27 @@ std::string HttpResponse::EscapeJsonString(const std::string& input)
 
 }
 
+// URL解码实现:
+std::string HttpResponse::UrlDecode(const std::string& input) {
+    std::string result;
+    result.reserve(input.size());
+    
+    for (size_t i = 0; i < input.size(); ++i) {
+        if (input[i] == '%' && i + 2 < input.size()) {
+            int value;
+            std::istringstream is(input.substr(i + 1, 2));
+            if (is >> std::hex >> value) {
+                result += static_cast<char>(value);
+                i += 2;
+            } else {
+                result += input[i];
+            }
+        } else if (input[i] == '+') {
+            result += ' ';
+        } else {
+            result += input[i];
+        }
+    }
+    
+    return result;
+}
