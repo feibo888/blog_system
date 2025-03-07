@@ -4,6 +4,7 @@
 #include "../pool/sqlconnRAll.h"
 #include <cassert>
 
+
 bool BlogManager::CreateBlog(const std::string& title, const std::string& content, const std::string& author) {
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
@@ -198,11 +199,13 @@ std::vector<Blog> BlogManager::GetBlogsByAuthor(const std::string& author) {
     return blogs;
 }
 
-User BlogManager::GetUser(const std::string& username) {
+User BlogManager::GetUser(const std::string& username) 
+{
     User user;
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
-    if (!sql) {
+    if (!sql) 
+    {
         LOG_ERROR("Failed to get MySQL connection for GetUser");
         return user;
     }
@@ -213,46 +216,78 @@ User BlogManager::GetUser(const std::string& username) {
 
     // 构建查询语句
     char query[512];
+    // snprintf(query, sizeof(query),
+    //     "SELECT u.username, u.email, u.nickname, u.avatar_url, u.bio, u.created_at, "
+    //     "(SELECT COUNT(*) FROM blogs WHERE author = u.username) as posts_count, "
+    //     "(SELECT COUNT(*) FROM likes WHERE blog_id IN (SELECT id FROM blogs WHERE author = u.username)) as likes_received, "
+    //     "(SELECT COUNT(*) FROM follows WHERE following_id = u.username) as followers_count, "
+    //     "(SELECT COUNT(*) FROM follows WHERE follower_id = u.username) as following_count "
+    //     "FROM user u WHERE u.username = '%s'",
+    //     escaped_username);
+
     snprintf(query, sizeof(query),
-        "SELECT u.username, u.email, u.nickname, u.avatar_url, u.bio, u.created_at, "
-        "(SELECT COUNT(*) FROM blogs WHERE author = u.username) as posts_count, "
-        "(SELECT COUNT(*) FROM likes WHERE blog_id IN (SELECT id FROM blogs WHERE author = u.username)) as likes_received, "
-        "(SELECT COUNT(*) FROM follows WHERE following_id = u.username) as followers_count, "
-        "(SELECT COUNT(*) FROM follows WHERE follower_id = u.username) as following_count "
-        "FROM user u WHERE u.username = '%s'",
-        escaped_username);
+    "SELECT u.username, u.email, u.nickname, u.avatar_url, u.gender, u.birth_date, "
+    "u.location, u.bio, u.website, u.created_at, "
+    "(SELECT COUNT(*) FROM blogs WHERE author = u.username) as posts_count, "
+    "(SELECT COUNT(*) FROM likes WHERE blog_id IN (SELECT id FROM blogs WHERE author = u.username)) as likes_received, "
+    "(SELECT COUNT(*) FROM follows WHERE following_id = u.username) as followers_count, "
+    "(SELECT COUNT(*) FROM follows WHERE follower_id = u.username) as following_count "
+    "FROM user u WHERE u.username = '%s'",
+    escaped_username);
 
     LOG_DEBUG("Executing query: %s", query);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Query user failed: %s", mysql_error(sql));
         return user;
     }
 
     MYSQL_RES* res = mysql_store_result(sql);
-    if (!res) {
+    if (!res) 
+    {
         LOG_ERROR("No result: %s", mysql_error(sql));
         return user;
     }
 
-    if (MYSQL_ROW row = mysql_fetch_row(res)) {
+    // if (MYSQL_ROW row = mysql_fetch_row(res)) 
+    // {
+    //     user.username = row[0] ? row[0] : "";
+    //     user.email = row[1] ? row[1] : "";
+    //     user.nickname = row[2] ? row[2] : user.username;
+    //     user.avatar_url = row[3] ? row[3] : "";
+    //     user.bio = row[4] ? row[4] : "";
+    //     user.registered_at = row[5] ? row[5] : "";
+    //     user.posts_count = row[6] ? atoi(row[6]) : 0;
+    //     user.likes_received = row[7] ? atoi(row[7]) : 0;
+    //     user.followers_count = row[8] ? atoi(row[8]) : 0;
+    //     user.following_count = row[9] ? atoi(row[9]) : 0;
+    // }
+
+    if (MYSQL_ROW row = mysql_fetch_row(res)) 
+    {
         user.username = row[0] ? row[0] : "";
         user.email = row[1] ? row[1] : "";
         user.nickname = row[2] ? row[2] : user.username;
         user.avatar_url = row[3] ? row[3] : "";
-        user.bio = row[4] ? row[4] : "";
-        user.registered_at = row[5] ? row[5] : "";
-        user.posts_count = row[6] ? atoi(row[6]) : 0;
-        user.likes_received = row[7] ? atoi(row[7]) : 0;
-        user.followers_count = row[8] ? atoi(row[8]) : 0;
-        user.following_count = row[9] ? atoi(row[9]) : 0;
+        user.gender = row[4] ? row[4] : "";
+        user.birth_date = row[5] ? row[5] : "";
+        user.location = row[6] ? row[6] : "";
+        user.bio = row[7] ? row[7] : "";
+        user.website = row[8] ? row[8] : "";
+        user.registered_at = row[9] ? row[9] : "";
+        user.posts_count = row[10] ? atoi(row[10]) : 0;
+        user.likes_received = row[11] ? atoi(row[11]) : 0;
+        user.followers_count = row[12] ? atoi(row[12]) : 0;
+        user.following_count = row[13] ? atoi(row[13]) : 0;
     }
 
     mysql_free_result(res);
     return user;
 }
 
-bool BlogManager::UpdateUser(const std::string& username, const std::string& newPassword) {
+bool BlogManager::UpdateUser(const std::string& username, const std::string& newPassword) 
+{
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
     if (!sql) return false;
@@ -263,11 +298,13 @@ bool BlogManager::UpdateUser(const std::string& username, const std::string& new
     return true;
 }
 
-std::vector<Blog> BlogManager::GetUserLikes(const std::string& username) {
+std::vector<Blog> BlogManager::GetUserLikes(const std::string& username) 
+{
     std::vector<Blog> likes;
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
-    if (!sql) {
+    if (!sql) 
+    {
         LOG_ERROR("Failed to get MySQL connection for GetUserLikes");
         return likes;
     }
@@ -284,19 +321,22 @@ std::vector<Blog> BlogManager::GetUserLikes(const std::string& username) {
         "ORDER BY l.created_at DESC",
         escaped_username);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Query user likes failed: %s", mysql_error(sql));
         return likes;
     }
 
     MYSQL_RES* res = mysql_store_result(sql);
-    if (!res) {
+    if (!res) 
+    {
         LOG_ERROR("No result: %s", mysql_error(sql));
         return likes;
     }
 
     MYSQL_ROW row;
-    while ((row = mysql_fetch_row(res))) {
+    while ((row = mysql_fetch_row(res))) 
+    {
         Blog blog;
         blog.id = atoi(row[0]);
         blog.title = row[1] ? row[1] : "";
@@ -309,11 +349,13 @@ std::vector<Blog> BlogManager::GetUserLikes(const std::string& username) {
     return likes;
 }
 
-std::vector<Blog> BlogManager::GetUserFavorites(const std::string& username) {
+std::vector<Blog> BlogManager::GetUserFavorites(const std::string& username) 
+{
     std::vector<Blog> favorites;
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
-    if (!sql) {
+    if (!sql) 
+    {
         LOG_ERROR("Failed to get MySQL connection for GetUserFavorites");
         return favorites;
     }
@@ -330,19 +372,22 @@ std::vector<Blog> BlogManager::GetUserFavorites(const std::string& username) {
         "ORDER BY f.created_at DESC",
         escaped_username);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Query user favorites failed: %s", mysql_error(sql));
         return favorites;
     }
 
     MYSQL_RES* res = mysql_store_result(sql);
-    if (!res) {
+    if (!res) 
+    {
         LOG_ERROR("No result: %s", mysql_error(sql));
         return favorites;
     }
 
     MYSQL_ROW row;
-    while ((row = mysql_fetch_row(res))) {
+    while ((row = mysql_fetch_row(res))) 
+    {
         Blog blog;
         blog.id = atoi(row[0]);
         blog.title = row[1] ? row[1] : "";
@@ -355,11 +400,13 @@ std::vector<Blog> BlogManager::GetUserFavorites(const std::string& username) {
     return favorites;
 }
 
-std::vector<Notification> BlogManager::GetUserNotifications(const std::string& username) {
+std::vector<Notification> BlogManager::GetUserNotifications(const std::string& username) 
+{
     std::vector<Notification> notifications;
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
-    if (!sql) {
+    if (!sql) 
+    {
         LOG_ERROR("Failed to get MySQL connection for GetUserNotifications");
         return notifications;
     }
@@ -375,19 +422,22 @@ std::vector<Notification> BlogManager::GetUserNotifications(const std::string& u
         "ORDER BY created_at DESC",
         escaped_username);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Query user notifications failed: %s", mysql_error(sql));
         return notifications;
     }
 
     MYSQL_RES* res = mysql_store_result(sql);
-    if (!res) {
+    if (!res) 
+    {
         LOG_ERROR("No result: %s", mysql_error(sql));
         return notifications;
     }
 
     MYSQL_ROW row;
-    while ((row = mysql_fetch_row(res))) {
+    while ((row = mysql_fetch_row(res))) 
+    {
         Notification notif;
         notif.id = atoi(row[0]);
         notif.content = row[1] ? row[1] : "";
@@ -401,11 +451,13 @@ std::vector<Notification> BlogManager::GetUserNotifications(const std::string& u
 }
 
 // 获取文章的评论列表
-std::vector<Comment> BlogManager::GetComments(int blog_id) {
+std::vector<Comment> BlogManager::GetComments(int blog_id) 
+{
     std::vector<Comment> comments;
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
-    if (!sql) {
+    if (!sql) 
+    {
         LOG_ERROR("Failed to get MySQL connection for GetComments");
         return comments;
     }
@@ -419,19 +471,22 @@ std::vector<Comment> BlogManager::GetComments(int blog_id) {
         "ORDER BY c.created_at ASC",  // 按时间正序，便于构建评论树
         blog_id);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Query comments failed: %s", mysql_error(sql));
         return comments;
     }
 
     MYSQL_RES* res = mysql_store_result(sql);
-    if (!res) {
+    if (!res) 
+    {
         LOG_ERROR("No result: %s", mysql_error(sql));
         return comments;
     }
 
     MYSQL_ROW row;
-    while ((row = mysql_fetch_row(res))) {
+    while ((row = mysql_fetch_row(res))) 
+    {
         Comment comment;
         comment.id = atoi(row[0]);
         comment.blog_id = atoi(row[1]);
@@ -449,10 +504,12 @@ std::vector<Comment> BlogManager::GetComments(int blog_id) {
 
 // 创建新评论
 bool BlogManager::CreateComment(int blog_id, const std::string& user_id, 
-                              const std::string& content, int parent_id) {
+                              const std::string& content, int parent_id) 
+                              {
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
-    if (!sql) {
+    if (!sql) 
+    {
         LOG_ERROR("Failed to get MySQL connection for CreateComment");
         return false;
     }
@@ -464,19 +521,23 @@ bool BlogManager::CreateComment(int blog_id, const std::string& user_id,
     mysql_real_escape_string(sql, escaped_user_id, user_id.c_str(), user_id.length());
 
     char query[2560];
-    if (parent_id != -1) {
+    if (parent_id != -1) 
+    {
         snprintf(query, sizeof(query),
             "INSERT INTO comments (blog_id, user_id, content, parent_id) "
             "VALUES (%d, '%s', '%s', %d)",
             blog_id, escaped_user_id, escaped_content, parent_id);
-    } else {
+    } 
+    else 
+    {
         snprintf(query, sizeof(query),
             "INSERT INTO comments (blog_id, user_id, content) "
             "VALUES (%d, '%s', '%s')",
             blog_id, escaped_user_id, escaped_content);
     }
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Create comment failed: %s", mysql_error(sql));
         return false;
     }
@@ -487,7 +548,8 @@ bool BlogManager::CreateComment(int blog_id, const std::string& user_id,
         "WHERE id = %d",
         blog_id);
     
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Update comments_count failed: %s", mysql_error(sql));
         // 不需要回滚评论创建，因为评论计数不准确比丢失评论好
     }
@@ -496,10 +558,12 @@ bool BlogManager::CreateComment(int blog_id, const std::string& user_id,
 }
 
 // 删除评论
-bool BlogManager::DeleteComment(int comment_id) {
+bool BlogManager::DeleteComment(int comment_id)
+{
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
-    if (!sql) {
+    if (!sql) 
+    {
         LOG_ERROR("Failed to get MySQL connection for DeleteComment");
         return false;
     }
@@ -510,19 +574,22 @@ bool BlogManager::DeleteComment(int comment_id) {
         "SELECT blog_id FROM comments WHERE id = %d",
         comment_id);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Query comment blog_id failed: %s", mysql_error(sql));
         return false;
     }
 
     MYSQL_RES* res = mysql_store_result(sql);
-    if (!res) {
+    if (!res) 
+    {
         LOG_ERROR("No result: %s", mysql_error(sql));
         return false;
     }
 
     MYSQL_ROW row = mysql_fetch_row(res);
-    if (!row) {
+    if (!row) 
+    {
         mysql_free_result(res);
         LOG_ERROR("Comment not found: %d", comment_id);
         return false;
@@ -532,7 +599,8 @@ bool BlogManager::DeleteComment(int comment_id) {
     mysql_free_result(res);
 
     // 开始事务
-    if (mysql_query(sql, "START TRANSACTION")) {
+    if (mysql_query(sql, "START TRANSACTION")) 
+    {
         LOG_ERROR("Start transaction failed: %s", mysql_error(sql));
         return false;
     }
@@ -542,7 +610,8 @@ bool BlogManager::DeleteComment(int comment_id) {
         "DELETE FROM comments WHERE id = %d OR parent_id = %d",
         comment_id, comment_id);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Delete comment failed: %s", mysql_error(sql));
         mysql_query(sql, "ROLLBACK");
         return false;
@@ -554,14 +623,16 @@ bool BlogManager::DeleteComment(int comment_id) {
         "WHERE id = %d",
         blog_id);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Update comments_count failed: %s", mysql_error(sql));
         mysql_query(sql, "ROLLBACK");
         return false;
     }
 
     // 提交事务
-    if (mysql_query(sql, "COMMIT")) {
+    if (mysql_query(sql, "COMMIT")) 
+    {
         LOG_ERROR("Commit transaction failed: %s", mysql_error(sql));
         mysql_query(sql, "ROLLBACK");
         return false;
@@ -571,10 +642,12 @@ bool BlogManager::DeleteComment(int comment_id) {
 }
 
 // 检查用户是否可以删除评论
-bool BlogManager::CanDeleteComment(int comment_id, const std::string& username) {
+bool BlogManager::CanDeleteComment(int comment_id, const std::string& username) 
+{
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
-    if (!sql) {
+    if (!sql) 
+    {
         LOG_ERROR("Failed to get MySQL connection for CanDeleteComment");
         return false;
     }
@@ -587,13 +660,15 @@ bool BlogManager::CanDeleteComment(int comment_id, const std::string& username) 
         "SELECT 1 FROM comments WHERE id = %d AND user_id = '%s'",
         comment_id, escaped_username);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Check comment permission failed: %s", mysql_error(sql));
         return false;
     }
 
     MYSQL_RES* res = mysql_store_result(sql);
-    if (!res) {
+    if (!res) 
+    {
         LOG_ERROR("No result: %s", mysql_error(sql));
         return false;
     }
@@ -604,10 +679,12 @@ bool BlogManager::CanDeleteComment(int comment_id, const std::string& username) 
 }
 
 // 切换评论点赞状态
-bool BlogManager::ToggleCommentLike(int comment_id, const std::string& username) {
+bool BlogManager::ToggleCommentLike(int comment_id, const std::string& username) 
+{
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
-    if (!sql) {
+    if (!sql) 
+    {
         LOG_ERROR("Failed to get MySQL connection for ToggleCommentLike");
         return false;
     }
@@ -616,7 +693,8 @@ bool BlogManager::ToggleCommentLike(int comment_id, const std::string& username)
     mysql_real_escape_string(sql, escaped_username, username.c_str(), username.length());
 
     // 开始事务
-    if (mysql_query(sql, "START TRANSACTION")) {
+    if (mysql_query(sql, "START TRANSACTION")) 
+    {
         LOG_ERROR("Start transaction failed: %s", mysql_error(sql));
         return false;
     }
@@ -627,14 +705,16 @@ bool BlogManager::ToggleCommentLike(int comment_id, const std::string& username)
         "SELECT 1 FROM likes WHERE user_id = '%s' AND comment_id = %d",
         escaped_username, comment_id);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Check like status failed: %s", mysql_error(sql));
         mysql_query(sql, "ROLLBACK");
         return false;
     }
 
     MYSQL_RES* res = mysql_store_result(sql);
-    if (!res) {
+    if (!res) 
+    {
         LOG_ERROR("No result: %s", mysql_error(sql));
         mysql_query(sql, "ROLLBACK");
         return false;
@@ -643,19 +723,23 @@ bool BlogManager::ToggleCommentLike(int comment_id, const std::string& username)
     bool already_liked = mysql_num_rows(res) > 0;
     mysql_free_result(res);
 
-    if (already_liked) {
+    if (already_liked) 
+    {
         // 取消点赞
         snprintf(query, sizeof(query),
             "DELETE FROM likes WHERE user_id = '%s' AND comment_id = %d",
             escaped_username, comment_id);
-    } else {
+    } 
+    else 
+    {
         // 添加点赞
         snprintf(query, sizeof(query),
             "INSERT INTO likes (user_id, comment_id) VALUES ('%s', %d)",
             escaped_username, comment_id);
     }
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Toggle like failed: %s", mysql_error(sql));
         mysql_query(sql, "ROLLBACK");
         return false;
@@ -666,14 +750,16 @@ bool BlogManager::ToggleCommentLike(int comment_id, const std::string& username)
         "UPDATE comments SET likes_count = likes_count %s 1 WHERE id = %d",
         already_liked ? "-" : "+", comment_id);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Update likes_count failed: %s", mysql_error(sql));
         mysql_query(sql, "ROLLBACK");
         return false;
     }
 
     // 提交事务
-    if (mysql_query(sql, "COMMIT")) {
+    if (mysql_query(sql, "COMMIT")) 
+    {
         LOG_ERROR("Commit transaction failed: %s", mysql_error(sql));
         mysql_query(sql, "ROLLBACK");
         return false;
@@ -682,10 +768,12 @@ bool BlogManager::ToggleCommentLike(int comment_id, const std::string& username)
     return true;
 }
 
-bool BlogManager::ToggleBlogLike(int blog_id, const std::string& username, bool& is_liked_out, int& likes_count_out) {
+bool BlogManager::ToggleBlogLike(int blog_id, const std::string& username, bool& is_liked_out, int& likes_count_out) 
+{
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
-    if (!sql) {
+    if (!sql) 
+    {
         LOG_ERROR("Failed to get MySQL connection");
         return false;
     }
@@ -700,13 +788,15 @@ bool BlogManager::ToggleBlogLike(int blog_id, const std::string& username, bool&
         "SELECT 1 FROM likes WHERE user_id = '%s' AND blog_id = %d",
         escaped_username, blog_id);
     
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Check like status failed: %s", mysql_error(sql));
         return false;
     }
     
     MYSQL_RES* res = mysql_store_result(sql);
-    if (!res) {
+    if (!res) 
+    {
         LOG_ERROR("Store result failed: %s", mysql_error(sql));
         return false;
     }
@@ -715,13 +805,16 @@ bool BlogManager::ToggleBlogLike(int blog_id, const std::string& username, bool&
     mysql_free_result(res);
     
     // 根据是否已点赞，执行添加或删除
-    if (already_liked) {
+    if (already_liked) 
+    {
         // 取消点赞
         snprintf(query, sizeof(query),
             "DELETE FROM likes WHERE user_id = '%s' AND blog_id = %d",
             escaped_username, blog_id);
         is_liked_out = false;
-    } else {
+    } 
+    else
+    {
         // 添加点赞
         snprintf(query, sizeof(query),
             "INSERT INTO likes(user_id, blog_id) VALUES('%s', %d)",
@@ -729,7 +822,8 @@ bool BlogManager::ToggleBlogLike(int blog_id, const std::string& username, bool&
         is_liked_out = true;
     }
     
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Toggle like failed: %s", mysql_error(sql));
         return false;
     }
@@ -739,19 +833,22 @@ bool BlogManager::ToggleBlogLike(int blog_id, const std::string& username, bool&
         "SELECT COUNT(*) FROM likes WHERE blog_id = %d",
         blog_id);
     
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Get likes count failed: %s", mysql_error(sql));
         return false;
     }
     
     MYSQL_RES* count_res = mysql_store_result(sql);
-    if (!count_res) {
+    if (!count_res) 
+    {
         LOG_ERROR("Store result failed: %s", mysql_error(sql));
         return false;
     }
     
     MYSQL_ROW row = mysql_fetch_row(count_res);
-    if (row) {
+    if (row) 
+    {
         likes_count_out = row[0] ? atoi(row[0]) : 0;
     }
     mysql_free_result(count_res);
@@ -760,10 +857,12 @@ bool BlogManager::ToggleBlogLike(int blog_id, const std::string& username, bool&
 }
 
 // 检查用户是否已经点赞了文章
-bool BlogManager::HasUserLikedBlog(int blog_id, const std::string& username) {
+bool BlogManager::HasUserLikedBlog(int blog_id, const std::string& username) 
+{
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
-    if (!sql) {
+    if (!sql) 
+    {
         LOG_ERROR("Failed to get MySQL connection for HasUserLikedBlog");
         return false;
     }
@@ -776,13 +875,15 @@ bool BlogManager::HasUserLikedBlog(int blog_id, const std::string& username) {
         "SELECT 1 FROM likes WHERE user_id = '%s' AND blog_id = %d",
         escaped_username, blog_id);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Check blog like status failed: %s", mysql_error(sql));
         return false;
     }
 
     MYSQL_RES* res = mysql_store_result(sql);
-    if (!res) {
+    if (!res) 
+    {
         LOG_ERROR("No result: %s", mysql_error(sql));
         return false;
     }
@@ -793,10 +894,12 @@ bool BlogManager::HasUserLikedBlog(int blog_id, const std::string& username) {
 }
 
 // 获取文章的点赞数
-int BlogManager::GetBlogLikesCount(int blog_id) {
+int BlogManager::GetBlogLikesCount(int blog_id) 
+{
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
-    if (!sql) {
+    if (!sql) 
+    {
         LOG_ERROR("Failed to get MySQL connection for GetBlogLikesCount");
         return 0;
     }
@@ -807,20 +910,23 @@ int BlogManager::GetBlogLikesCount(int blog_id) {
         "SELECT COUNT(*) FROM likes WHERE blog_id = %d",
         blog_id);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Get blog likes count failed: %s", mysql_error(sql));
         return 0;
     }
 
     MYSQL_RES* res = mysql_store_result(sql);
-    if (!res) {
+    if (!res) 
+    {
         LOG_ERROR("No result: %s", mysql_error(sql));
         return 0;
     }
 
     MYSQL_ROW row = mysql_fetch_row(res);
     int likes_count = 0;
-    if (row && row[0]) {
+    if (row && row[0]) 
+    {
         likes_count = atoi(row[0]);
     }
 
@@ -829,10 +935,12 @@ int BlogManager::GetBlogLikesCount(int blog_id) {
 }
 
 // 检查用户是否可以删除文章
-bool BlogManager::CanDeleteBlog(int blog_id, const std::string& username) {
+bool BlogManager::CanDeleteBlog(int blog_id, const std::string& username) 
+{
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
-    if (!sql) {
+    if (!sql) 
+    {
         LOG_ERROR("Failed to get MySQL connection for CanDeleteBlog");
         return false;
     }
@@ -845,13 +953,15 @@ bool BlogManager::CanDeleteBlog(int blog_id, const std::string& username) {
         "SELECT 1 FROM blogs WHERE id = %d AND author = '%s'",
         blog_id, escaped_username);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Check blog permission failed: %s", mysql_error(sql));
         return false;
     }
 
     MYSQL_RES* res = mysql_store_result(sql);
-    if (!res) {
+    if (!res) 
+    {
         LOG_ERROR("No result: %s", mysql_error(sql));
         return false;
     }
@@ -862,16 +972,19 @@ bool BlogManager::CanDeleteBlog(int blog_id, const std::string& username) {
 }
 
 // 删除文章
-bool BlogManager::DeleteBlog(int blog_id) {
+bool BlogManager::DeleteBlog(int blog_id) 
+{
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
-    if (!sql) {
+    if (!sql) 
+    {
         LOG_ERROR("Failed to get MySQL connection for DeleteBlog");
         return false;
     }
 
     // 开始事务
-    if (mysql_query(sql, "START TRANSACTION")) {
+    if (mysql_query(sql, "START TRANSACTION")) 
+    {
         LOG_ERROR("Start transaction failed: %s", mysql_error(sql));
         return false;
     }
@@ -882,7 +995,8 @@ bool BlogManager::DeleteBlog(int blog_id) {
         "DELETE FROM likes WHERE blog_id = %d",
         blog_id);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Delete likes failed: %s", mysql_error(sql));
         mysql_query(sql, "ROLLBACK");
         return false;
@@ -893,7 +1007,8 @@ bool BlogManager::DeleteBlog(int blog_id) {
         "DELETE FROM comments WHERE blog_id = %d",
         blog_id);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Delete comments failed: %s", mysql_error(sql));
         mysql_query(sql, "ROLLBACK");
         return false;
@@ -904,14 +1019,16 @@ bool BlogManager::DeleteBlog(int blog_id) {
         "DELETE FROM blogs WHERE id = %d",
         blog_id);
 
-    if (mysql_query(sql, query)) {
+    if (mysql_query(sql, query)) 
+    {
         LOG_ERROR("Delete blog failed: %s", mysql_error(sql));
         mysql_query(sql, "ROLLBACK");
         return false;
     }
 
     // 提交事务 - 修复：直接使用 COMMIT 命令而不是之前的 query
-    if (mysql_query(sql, "COMMIT")) {
+    if (mysql_query(sql, "COMMIT")) 
+    {
         LOG_ERROR("Commit transaction failed: %s", mysql_error(sql));
         mysql_query(sql, "ROLLBACK");
         return false;
@@ -929,7 +1046,8 @@ bool BlogManager::CreateBlogWithFile(
 ) {
     MYSQL* sql;
     SqlConnRAll guard(&sql, SqlConnPool::Instance());
-    if (!sql) {
+    if (!sql) 
+    {
         LOG_ERROR("Failed to get MySQL connection for CreateBlogWithFile");
         return false;
     }
@@ -969,7 +1087,8 @@ bool BlogManager::CreateBlogWithFile(
     delete[] escaped_content_type;
     delete[] escaped_content;
     
-    if (!success) {
+    if (!success) 
+    {
         LOG_ERROR("Create blog failed: %s", mysql_error(sql));
         return false;
     }
@@ -977,3 +1096,91 @@ bool BlogManager::CreateBlogWithFile(
     return true;
 }
 
+bool BlogManager::UpdateUserProfile(
+    const std::string& username,
+    const std::unordered_map<std::string, std::string>& profileData
+) {
+    MYSQL* sql;
+    SqlConnRAll guard(&sql, SqlConnPool::Instance());
+    if (!sql) 
+    {
+        LOG_ERROR("Failed to get MySQL connection for UpdateUserProfile");
+        return false;
+    }
+
+    // 转义用户名避免SQL注入
+    char escaped_username[128];
+    mysql_real_escape_string(sql, escaped_username, username.c_str(), username.length());
+    
+    // 构建SET子句
+    std::string setClause;
+    bool isFirstField = true;
+    
+    // 处理每个可能的字段
+    const std::vector<std::string> validFields = 
+    {
+        "nickname", "email", "avatar_url", "gender", 
+        "birth_date", "location", "bio", "website"
+    };
+    
+    for (const auto& field : validFields) 
+    {
+        auto it = profileData.find(field);
+        // 如果提交了该字段且不为空
+        if (it != profileData.end() && !it->second.empty()) {
+            // 转义字段值
+            char escaped_value[1024];
+            mysql_real_escape_string(sql, escaped_value, it->second.c_str(), it->second.length());
+            
+            // 添加到SET子句
+            if (!isFirstField) 
+            {
+                setClause += ", ";
+            }
+            setClause += field + "='" + escaped_value + "'";
+            isFirstField = false;
+        }
+    }
+    
+    // 特殊处理avatar字段，它在数据库中名为avatar_url
+    auto it = profileData.find("avatar");
+    if (it != profileData.end() && !it->second.empty()) 
+    {
+        char escaped_value[1024];
+        mysql_real_escape_string(sql, escaped_value, it->second.c_str(), it->second.length());
+        
+        if (!isFirstField) {
+            setClause += ", ";
+        }
+        setClause += "avatar_url='" + std::string(escaped_value) + "'";
+        isFirstField = false;
+    }
+    
+    // 如果没有有效字段要更新，返回成功
+    if (isFirstField) 
+    {
+        LOG_INFO("No fields to update for user %s", username.c_str());
+        return true;
+    }
+    
+    // 构建并执行更新查询
+    std::string query = "UPDATE user SET " + setClause + " WHERE username='" + escaped_username + "'";
+    
+    LOG_DEBUG("Executing query: %s", query.c_str());
+    
+    if (mysql_query(sql, query.c_str())) 
+    {
+        LOG_ERROR("Update user profile failed: %s", mysql_error(sql));
+        return false;
+    }
+    
+    // 检查是否真的更新了记录
+    if (mysql_affected_rows(sql) == 0) 
+    {
+        LOG_WARN("No rows updated for user %s", username.c_str());
+        // 可能用户名不存在或没有实际更改
+    }
+    
+    LOG_INFO("User profile updated: username=%s", username.c_str());
+    return true;
+}

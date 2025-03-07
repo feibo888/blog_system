@@ -548,6 +548,82 @@
                 })
                 .catch(error => console.error('加载用户资料失败:', error));
         }
+
+        // 处理个人资料表单提交
+        document.addEventListener('DOMContentLoaded', () => {
+            const profileForm = document.getElementById('profile-form');
+            if (profileForm) {
+                profileForm.addEventListener('submit', updateProfile);
+            }
+        });
+
+        // 更新用户个人资料
+        function updateProfile(event) {
+            event.preventDefault();
+            
+            if (!checkLoginStatus()) {
+                alert('请先登录！');
+                return;
+            }
+            
+            // 显示加载状态
+            const saveBtn = event.submitter;
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = '保存中...';
+            saveBtn.disabled = true;
+            
+            // 收集表单数据
+            const formData = new FormData(document.getElementById('profile-form'));
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+            
+            // 发送请求
+            const token = localStorage.getItem('token');
+            fetch('/user/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                saveBtn.disabled = false;
+                
+                if (result.success) {
+                    saveBtn.textContent = '已保存';
+                    setTimeout(() => {
+                        saveBtn.textContent = originalText;
+                    }, 2000);
+                    
+                    // 更新侧边栏显示
+                    if (data.nickname) {
+                        document.getElementById('user-nickname').textContent = data.nickname;
+                    }
+                    if (data.bio) {
+                        document.getElementById('user-bio').textContent = data.bio;
+                    }
+                    if (data.avatar_url) {
+                        document.getElementById('user-avatar').src = data.avatar_url;
+                    }
+                    
+                    alert('个人资料更新成功！');
+                } else {
+                    saveBtn.textContent = originalText;
+                    alert('更新失败：' + result.message);
+                }
+            })
+            .catch(error => {
+                console.error('更新个人资料失败:', error);
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+                alert('更新失败，请稍后重试');
+            });
+        }
+
     </script>
 </body>
 </html> 

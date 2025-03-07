@@ -4,12 +4,16 @@ project(my_webServer)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2")
 
-find_package(Boost REQUIRED COMPONENTS regex)
-include_directories(${Boost_INCLUDE_DIRS})
-if (Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS})
+# 检查Boost版本并添加json组件
+set(Boost_COMPONENTS regex)
+find_package(Boost COMPONENTS ${Boost_COMPONENTS})
+if(Boost_FOUND AND Boost_VERSION VERSION_GREATER_EQUAL 1.75.0)
+    list(APPEND Boost_COMPONENTS json)
+    find_package(Boost REQUIRED COMPONENTS ${Boost_COMPONENTS})
+    add_compile_definitions(HAS_BOOST_JSON)
 endif()
 
+include_directories(${Boost_INCLUDE_DIRS})
 include_directories(/usr/include/mysql)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/buffer BUFFER_SRC)
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/http HTTP_SRC)
@@ -31,4 +35,4 @@ add_executable(${PROJECT_NAME}
                 ${TIMER_SRC}
                 ${BLOG_SRC})
 
-target_link_libraries(${PROJECT_NAME} mysqlclient pthread Boost::regex)
+target_link_libraries(${PROJECT_NAME} mysqlclient pthread ${Boost_LIBRARIES})

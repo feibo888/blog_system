@@ -7,6 +7,9 @@
 #include <sstream>
 #include <iomanip>
 #include <ctime>
+#ifdef HAS_BOOST_JSON
+#include <boost/json.hpp>
+#endif
 using namespace std;
 
 const unordered_map<string, string> HttpResponse::SUFFIX_TYPE =
@@ -241,7 +244,8 @@ void HttpResponse::ErrorHtml_()
 
 std::string HttpResponse::GetFileType_()
 {
-    if (isDynamic_) {
+    if (isDynamic_) 
+    {
         return "application/json";  // 动态路由返回 JSON
     }
     //判断文件类型
@@ -260,14 +264,17 @@ std::string HttpResponse::GetFileType_()
 
 
 // 新增动态内容生成函数
-void HttpResponse::AddDynamicContent_(Buffer& buff) {
+void HttpResponse::AddDynamicContent_(Buffer& buff) 
+{
     std::ostringstream json;
 
     // 获取博客列表
-    if (path_ == "/blogs/getall" && method_ == "GET") {
+    if (path_ == "/blogs/getall" && method_ == "GET") 
+    {
         std::vector<Blog> blogs = BlogManager::GetBlogs();
         json << "[";
-        for (size_t i = 0; i < blogs.size(); ++i) {
+        for (size_t i = 0; i < blogs.size(); ++i) 
+        {
             json << "{\"id\":" << blogs[i].id 
                  << ",\"title\":\"" << EscapeJsonString(blogs[i].title) 
                  << "\",\"author\":\"" << EscapeJsonString(blogs[i].author) 
@@ -280,7 +287,8 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
         }
         json << "]";
     }
-    else if (path_.rfind("/blogs/getbyid/", 0) == 0 && method_ == "GET") {
+    else if (path_.rfind("/blogs/getbyid/", 0) == 0 && method_ == "GET") 
+    {
         string str_id = path_.substr(15);  // 去掉 "/blogs/getbyid/"
         int id = atoi(str_id.c_str());
         Blog blog = BlogManager::GetBlogById(id);
@@ -288,7 +296,8 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
         // 获取当前用户是否已点赞
         string username = getUsernameFromToken();
         bool is_liked = false;
-        if (!username.empty()) {
+        if (!username.empty()) 
+        {
             is_liked = BlogManager::HasUserLikedBlog(id, username);
         }
         
@@ -328,21 +337,28 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
     {
         string username = path_.substr(12, path_.find("/profile") - 12);  // 去掉 "/blogs/user/"和"/profile"
         User user = BlogManager::GetUser(username);
-        if (user.username.empty()) {
+        if (user.username.empty()) 
+        {
             code_ = 404;
             json << "{\"error\":\"User not found\"}";
-        } else {
+        } 
+        else 
+        {
             json << "{"
-                 << "\"username\":\"" << EscapeJsonString(user.username) << "\","
-                 << "\"nickname\":\"" << EscapeJsonString(user.nickname) << "\","
-                 << "\"email\":\"" << EscapeJsonString(user.email) << "\","
-                 << "\"avatar_url\":\"" << EscapeJsonString(user.avatar_url) << "\","
-                 << "\"bio\":\"" << EscapeJsonString(user.bio) << "\","
-                 << "\"posts_count\":" << user.posts_count << ","
-                 << "\"likes_received\":" << user.likes_received << ","
-                 << "\"followers_count\":" << user.followers_count << ","
-                 << "\"following_count\":" << user.following_count
-                 << "}";
+                << "\"username\":\"" << EscapeJsonString(user.username) << "\","
+                << "\"nickname\":\"" << EscapeJsonString(user.nickname) << "\","
+                << "\"email\":\"" << EscapeJsonString(user.email) << "\","
+                << "\"avatar_url\":\"" << EscapeJsonString(user.avatar_url) << "\","
+                << "\"gender\":\"" << EscapeJsonString(user.gender) << "\","
+                << "\"birth_date\":\"" << EscapeJsonString(user.birth_date) << "\","
+                << "\"location\":\"" << EscapeJsonString(user.location) << "\","
+                << "\"website\":\"" << EscapeJsonString(user.website) << "\","
+                << "\"bio\":\"" << EscapeJsonString(user.bio) << "\","
+                << "\"posts_count\":" << user.posts_count << ","
+                << "\"likes_received\":" << user.likes_received << ","
+                << "\"followers_count\":" << user.followers_count << ","
+                << "\"following_count\":" << user.following_count
+                << "}";
         }
     }
     // 获取用户基本信息
@@ -350,10 +366,13 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
     {
         string username = path_.substr(12, path_.find("/basic") - 12);  // 去掉 "/blogs/user/"和"/basic"
         User user = BlogManager::GetUser(username);
-        if (user.username.empty()) {
+        if (user.username.empty()) 
+        {
             code_ = 404;
             json << "{\"error\":\"User not found\"}";
-        } else {
+        } 
+        else 
+        {
             json << "{"
                  << "\"posts_count\":" << user.posts_count << ","
                  << "\"likes_received\":" << user.likes_received << ","
@@ -385,7 +404,8 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
         string username = path_.substr(11, path_.find("/favorites") - 11);
         std::vector<Blog> favorites = BlogManager::GetUserFavorites(username);
         json << "[";
-        for (size_t i = 0; i < favorites.size(); ++i) {
+        for (size_t i = 0; i < favorites.size(); ++i) 
+        {
             json << "{\"id\":" << favorites[i].id 
                  << ",\"title\":\"" << EscapeJsonString(favorites[i].title) 
                  << "\",\"author\":\"" << EscapeJsonString(favorites[i].author)
@@ -401,7 +421,8 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
         string username = path_.substr(12, path_.find("/notifications") - 12);
         std::vector<Notification> notifications = BlogManager::GetUserNotifications(username);
         json << "[";
-        for (size_t i = 0; i < notifications.size(); ++i) {
+        for (size_t i = 0; i < notifications.size(); ++i) 
+        {
             json << "{\"id\":" << notifications[i].id 
                  << ",\"content\":\"" << EscapeJsonString(notifications[i].content) 
                  << "\",\"is_read\":" << (notifications[i].is_read ? "true" : "false")
@@ -648,6 +669,49 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
             }
         }
     }
+    else if (path_ == "/user/profile" && method_ == "PUT") 
+    {
+        // 从token获取当前用户
+        string username = getUsernameFromToken();
+        
+        if (username.empty()) 
+        {
+            code_ = 401;
+            json << "{\"success\":false,\"message\":\"Unauthorized\"}";
+        } 
+        else 
+        {
+            // 尝试更新用户资料
+            bool success = BlogManager::UpdateUserProfile(username, post_);
+            
+            if (success)
+            {
+                // 获取更新后的用户资料
+                User user = BlogManager::GetUser(username);
+                
+                json << "{"
+                     << "\"success\":true,"
+                     << "\"message\":\"Profile updated successfully\","
+                     << "\"user\": {"
+                     << "\"username\":\"" << EscapeJsonString(user.username) << "\","
+                     << "\"nickname\":\"" << EscapeJsonString(user.nickname) << "\","
+                     << "\"email\":\"" << EscapeJsonString(user.email) << "\","
+                     << "\"avatar_url\":\"" << EscapeJsonString(user.avatar_url) << "\","
+                     << "\"bio\":\"" << EscapeJsonString(user.bio) << "\","
+                     << "\"gender\":\"" << EscapeJsonString(user.gender) << "\","
+                     << "\"birth_date\":\"" << EscapeJsonString(user.birth_date) << "\","
+                     << "\"location\":\"" << EscapeJsonString(user.location) << "\","
+                     << "\"website\":\"" << EscapeJsonString(user.website) << "\""
+                     << "}"
+                     << "}";
+            } 
+            else 
+            {
+                code_ = 500;
+                json << "{\"success\":false,\"message\":\"Failed to update profile\"}";
+            }
+        }
+    }
 
     string body = json.str();
     if (body.empty()) {
@@ -660,7 +724,8 @@ void HttpResponse::AddDynamicContent_(Buffer& buff) {
 }
 
 // 辅助函数：从查询字符串中提取参数
-std::string HttpResponse::getQueryParam(const std::string& query, const std::string& param) {
+std::string HttpResponse::getQueryParam(const std::string& query, const std::string& param) 
+{
     size_t start = query.find(param + "=");
     if (start == string::npos) return "";
     start += param.length() + 1; // 跳过 "="
@@ -669,7 +734,8 @@ std::string HttpResponse::getQueryParam(const std::string& query, const std::str
     return query.substr(start, end - start);
 }
 
-std::string HttpResponse::generateToken(const std::string& username) {
+std::string HttpResponse::generateToken(const std::string& username) 
+{
     // 获取当前时间戳
     auto now = std::chrono::system_clock::now();
     auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -713,7 +779,22 @@ std::string HttpResponse::getUsernameFromToken()
 
 
 // 添加这个JSON字符串转义函数
-std::string HttpResponse::EscapeJsonString(const std::string& input) {
+std::string HttpResponse::EscapeJsonString(const std::string& input) 
+{
+
+#ifdef HAS_BOOST_JSON
+    try {
+        // 使用Boost JSON实现
+        boost::json::string jstr(input);
+        std::string serialized = boost::json::serialize(jstr);
+        return serialized.substr(1, serialized.length() - 2);
+    }
+    catch (const std::exception& e) {
+        LOG_ERROR("Boost JSON escape failed: %s", e.what());
+        // 出错时回退到手动实现
+    }
+#endif        
+    
     std::ostringstream escaped;
     for (auto c = input.begin(); c != input.end(); ++c) {
         switch (*c) {
@@ -733,5 +814,6 @@ std::string HttpResponse::EscapeJsonString(const std::string& input) {
         }
     }
     return escaped.str();
+
 }
 

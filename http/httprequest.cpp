@@ -40,12 +40,15 @@ bool HttpRequest::parse(Buffer& buff)
     }
     while (buff.ReadableBytes() && state_ != FINISH)
     {
-        switch (state_) {
+        switch (state_)
+        {
             // 处理请求行（按行解析）
-            case REQUEST_LINE: {
+            case REQUEST_LINE: 
+            {
                 const char* lineEnd = std::search(buff.Peek(), buff.BeginWriteConst(), CRLF, CRLF + 2);
                 std::string line(buff.Peek(), lineEnd);
-                if (!ParseRequestLine_(line)) {
+                if (!ParseRequestLine_(line)) 
+                {
                     LOG_ERROR("RequestLine parse error");
                     return false;
                 }
@@ -54,9 +57,9 @@ bool HttpRequest::parse(Buffer& buff)
                 state_ = HEADERS;  // 进入头部解析
                 break;
             }
-
             // 处理头部（按行解析，直到空行触发BODY状态）
-            case HEADERS: {
+            case HEADERS: 
+            {
                 const char* lineEnd = std::search(buff.Peek(), buff.BeginWriteConst(), CRLF, CRLF + 2);
                 std::string line(buff.Peek(), lineEnd);
 
@@ -65,38 +68,37 @@ bool HttpRequest::parse(Buffer& buff)
 
                 ParseHeader_(line);  // 该函数会在空行时将state_设为BODY
 
-
-                if (isEmptyLine) {
+                if (isEmptyLine) 
+                {
                     // 对于POST请求的特殊处理
-                    if (method_ == "POST") {
+                    if (method_ == "POST" || method_ == "PUT") 
+                    {
                         // 无Content-Length或Content-Length为0的POST请求
-                        if (header_.count("Content-Length") == 0 || header_["Content-Length"] == "0") {
+                        if (header_.count("Content-Length") == 0 || header_["Content-Length"] == "0") 
+                        {
                             LOG_DEBUG("POST request with empty body");
                             ParseBody_("");  // 处理空请求体
                             state_ = FINISH; // 直接设为完成状态
                         }
                         // 其他情况会自动进入BODY状态
-                    } else {
+                    } 
+                    else 
+                    {
                         // 非POST请求在遇到空行后直接完成
                         state_ = FINISH;
                     }
                 }
-
-                // if ((buff.ReadableBytes() <= 2 && method_ != "POST") || (header_.count("Content-Length") == 1 && header_["Content-Length"] == "0")) 
-                // {
-                //     state_ = FINISH;
-                // }
                 buff.RetrieveUntil(lineEnd + 2);
                 break;
             }
-
             // 处理请求体（一次性读取所有内容）
-            case BODY: {
-
-                if(method_ == "POST")
+            case BODY: 
+            {
+                if(method_ == "POST" || method_ == "PUT")
                 {
                     auto it = header_.find("Content-Length");
-                    if (it == header_.end()) {
+                    if (it == header_.end()) 
+                    {
                         
                         LOG_ERROR("No Content-Length in headers");
                         state_ = FINISH;
@@ -104,16 +106,20 @@ bool HttpRequest::parse(Buffer& buff)
                     }
                     int content_length_;
                     // 解析Content-Length值
-                    try {
+                    try 
+                    {
                         content_length_ = std::stoi(it->second);                    
-                    } catch (...) {
+                    } 
+                    catch (...) 
+                    {
                         LOG_ERROR("Invalid Content-Length: %s", it->second.c_str());
                         state_ = FINISH;
                         return false;
                     }
 
                     // 检查缓冲区数据是否足够
-                    if (buff.ReadableBytes() < static_cast<size_t>(content_length_)) {
+                    if (buff.ReadableBytes() < static_cast<size_t>(content_length_))
+                    {
                         return false;  // 数据不足，等待下次读取
                     }
 
@@ -255,9 +261,6 @@ void HttpRequest::ParseHeader_(const std::string& line)
     if (boost::regex_match(line, subMatch, patten))
     {
         header_[subMatch[1]] = subMatch[2];
-        // string header_name = subMatch[1];
-        // std::transform(header_name.begin(), header_name.end(), header_name.begin(), ::tolower);  // 转小写
-        // header_[header_name] = subMatch[2];
     }
     else
     {
@@ -432,12 +435,8 @@ void HttpRequest::ParseFromUrlencoded_()
             if (i + 2 >= n) break;  // 防止越界
             num = ConverHex(body_[i + 1]) * 16 + ConverHex(body_[i + 2]);
             body_[i] = static_cast<char>(num);  // 替换为 ASCII 字符
-            //body_.erase(i + 1, 2);             // 删除 % 后的两个字符
-            //n = body_.size();                   // 更新总长度
             i += 2;
             break;
-
-
         case '&':
             value = body_.substr(j, i - j);
             j = i + 1;
@@ -449,12 +448,6 @@ void HttpRequest::ParseFromUrlencoded_()
         }
     }
     // 处理最后一个键值对
-    // if (j < n) {
-    //     value = body_.substr(j, i - j);
-    //     post_[key] = value;
-    //     LOG_DEBUG("%s = %s", key.c_str(), value.c_str());
-    // }
-
     assert(j <= i);
     if(post_.count(key) == 0 && j < i) {
         value = body_.substr(j, i - j);
@@ -491,7 +484,6 @@ bool HttpRequest::UserVerify(const std::string& name, const std::string& pwd, bo
     //查询用户及密码
     snprintf(order, 256, "SELECT username, password FROM user WHERE username='%s' LIMIT 1", name.c_str());
     LOG_DEBUG("%s", order);
-    //cout << order << endl;
 
     // 执行查询
     if (mysql_query(sql, order))
@@ -567,17 +559,22 @@ void HttpRequest::ParseJson_() {
 
         // 遍历 JSON 对象的所有字段
         for (const auto& pair : pt) {
-            if (pair.second.empty()) {  // 如果是简单值
+            if (pair.second.empty()) 
+            {  // 如果是简单值
                 post_[pair.first] = pair.second.data();
                 LOG_DEBUG("JSON field: %s = %s", pair.first.c_str(), pair.second.data().c_str());
-            } else {  // 如果是数组或对象，转换为字符串
+            } 
+            else 
+            {  // 如果是数组或对象，转换为字符串
                 std::stringstream value_ss;
                 boost::property_tree::write_json(value_ss, pair.second);
                 post_[pair.first] = value_ss.str();
                 LOG_DEBUG("JSON complex field: %s = %s", pair.first.c_str(), value_ss.str().c_str());
             }
         }
-    } catch (const std::exception& e) {
+    } 
+    catch (const std::exception& e) 
+    {
         LOG_ERROR("JSON parse error: %s", e.what());
     }
 }

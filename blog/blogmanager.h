@@ -5,6 +5,7 @@
 #include <vector>
 #include "../pool/sqlconnpool.h"
 #include <optional>
+#include <unordered_map>
 
 struct Blog {
     int id;
@@ -21,10 +22,14 @@ struct Blog {
 
 struct User {
     std::string username;
-    std::string nickname;
     std::string email;
+    std::string nickname;
     std::string avatar_url;
+    std::string gender;
+    std::string birth_date;
+    std::string location;
     std::string bio;
+    std::string website;
     std::string registered_at;
     int posts_count{0};
     int likes_received{0};
@@ -94,6 +99,11 @@ public:
         const std::string& author,
         const std::string& filename,
         const std::string& content_type
+    );
+
+    static bool UpdateUserProfile(
+        const std::string& username,
+        const std::unordered_map<std::string, std::string>& profileData
     );
 };
 
