@@ -12,6 +12,7 @@ services:
       - MYSQL_USER=root
       - MYSQL_PASSWORD=123456
       - MYSQL_DB=blog_data
+      - TZ=Asia/Shanghai  # 添加时区设置
     networks:
       - app-network
   db:
@@ -20,6 +21,7 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: 123456
       MYSQL_DATABASE: blog_data
+      TZ: Asia/Shanghai  # 添加时区设置
     volumes:
       - dbdata:/var/lib/mysql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql

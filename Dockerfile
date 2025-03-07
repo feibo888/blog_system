@@ -1,6 +1,9 @@
 # 构建阶段
 FROM ubuntu:20.04 AS builder
 
+# 设置时区环境变量
+ENV TZ=Asia/Shanghai
+
 # 安装构建工具和依赖
 RUN sed -i 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.list && \
     apt-get update && apt-get install -y \
@@ -23,6 +26,9 @@ RUN mkdir build && cd build && cmake .. && make
 
 # 运行阶段
 FROM ubuntu:20.04
+
+# 设置时区环境变量
+ENV TZ=Asia/Shanghai
 
 # 安装运行时依赖
 RUN sed -i 's@//.*archive.ubuntu.com@//mirrors.ustc.edu.cn@g' /etc/apt/sources.list && \
